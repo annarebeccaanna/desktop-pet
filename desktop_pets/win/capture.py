@@ -26,8 +26,8 @@ def set_excluded(hwnd: int, excluded: bool) -> bool:
         return False
     import ctypes
 
-    user32 = ctypes.windll.user32
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
     ok = bool(user32.SetWindowDisplayAffinity(ctypes.c_void_p(hwnd), WDA_EXCLUDEFROMCAPTURE if excluded else WDA_NONE))
     if not ok:
-        log.warning("SetWindowDisplayAffinity fehlgeschlagen (Fehler %s)", ctypes.GetLastError())
+        log.warning("SetWindowDisplayAffinity fehlgeschlagen (Fehler %s)", ctypes.get_last_error())
     return ok

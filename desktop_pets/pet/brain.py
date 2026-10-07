@@ -53,13 +53,13 @@ class Perception:
     features: frozenset[str] = frozenset()
     walk_left: float = 0.0
     walk_right: float = 1920.0
-    idle_timeout: float = 300.0
     hour: int = 12
     mood: float = 70.0
     energy: float = 80.0
     hunger: float = 30.0
     jump_targets: tuple[tuple[float, float], ...] = ()   # (x, y) erreichbarer Fensterkanten
     height: float = 32.0
+    on_window: bool = False            # steht auf einer Fensterkante (nicht am Boden)
 
 
 @dataclass
@@ -68,6 +68,20 @@ class Intent:
     vx: float = 0.0
     facing: int = 1
     jump_to: tuple[float, float] | None = None
+
+
+class Behaviour:
+    """Zusätzliches Verhalten, das eine Funktion (features/…) ins Gehirn einklinkt.
+
+    ``phase``: "pre" läuft vor Schlaf/Aufgaben (z. B. Einschlafen bei Inaktivität),
+    "post" nach Aufgaben und Einmal-Animationen, vor dem Herumstreunen (z. B. Mausjagd).
+    ``step`` gibt eine :class:`Intent` zurück, um diesen Tick zu übernehmen, sonst None.
+    """
+
+    phase = "post"
+
+    def step(self, brain: "Brain", dt: float, p: "Perception") -> "Intent | None":  # pragma: no cover
+        return None
 
 
 @dataclass
@@ -94,12 +108,11 @@ class Brain:
     timer: float = 2.0
     target_x: float | None = None
     forced_sleep: float = 0.0         # „Schlafen schicken“: Restdauer
-    chase_cooldown: float = 8.0
-    chase_time: float = 0.0
+    sleep_hold: bool = False          # ein Verhalten hält das Tier im Schlaf (z. B. Inaktivität)
+    after_landing: State | None = None  # was nach der nächsten Landung kommt (z. B. Freude nach dem Fangen)
     task: _Task | None = None
+    behaviours: list[Behaviour] = field(default_factory=list)
     events: list[str] = field(default_factory=list)   # z. B. "hearts", "arrived:feed", "caught", "woke"
-    _was_idle_sleep: bool = False
-    _caught_this_chase: bool = False
     _pending_jump: tuple[float, float] | None = None
 
     # ---------- Befehle von außen ----------
@@ -109,25 +122,26 @@ class Brain:
             self.events.append("woke")
         self.forced_sleep = 0.0
         self.task = _Task("goto", x, then, duration, run, tag)
-        self._set(State.RUN if run else State.WALK, 30.0)
+        self.set_state(State.RUN if run else State.WALK, 30.0)
 
     def send_to_sleep(self, duration: float = 600.0) -> None:
         self.task = None
         self.forced_sleep = duration
-        self._set(State.SLEEP, duration)
+        self.set_state(State.SLEEP, duration)
 
     def wake(self) -> None:
         if self.state == State.SLEEP:
             self.forced_sleep = 0.0
             self.events.append("woke")
-            self._set(State.IDLE, 1.5)
+            self.set_state(State.IDLE, 1.5)
 
     def petted(self) -> None:
         self.events.append("hearts")
+        self.events.append("petted")
         if self.state in (State.SLEEP, State.DRAGGED, State.JUMP, State.FALL, State.EAT):
             return
         self.task = None
-        self._set(State.HAPPY, 2.5)
+        self.set_state(State.HAPPY, 2.5)
 
     def react(self, reaction: str, duration: float = 2.0) -> None:
         """Freudensprung, Fauchen … (z. B. vom Webhook)."""
@@ -138,7 +152,7 @@ class Brain:
         if self.state == State.SLEEP:
             self.events.append("woke")
         self.forced_sleep = 0.0
-        self._set(state, duration)
+        self.set_state(state, duration)
 
     def turn_away_and_sleep(self) -> None:
         self.facing = -self.facing
@@ -147,80 +161,74 @@ class Brain:
     def start_drag(self) -> None:
         self.task = None
         self.forced_sleep = 0.0
-        self._set(State.DRAGGED, 1e9)
+        self.set_state(State.DRAGGED, 1e9)
 
     def end_drag(self) -> None:
-        self._set(State.FALL, 0.5)
+        self.set_state(State.FALL, 0.5)
 
     # ---------- Haupt-Tick ----------
     def tick(self, dt: float, p: Perception) -> Intent:
         self.timer -= dt
-        self.chase_cooldown = max(0.0, self.chase_cooldown - dt)
         if self.forced_sleep > 0:
             self.forced_sleep = max(0.0, self.forced_sleep - dt)
 
         if self.state == State.DRAGGED:
-            return self._intent()
+            return self.intent()
 
         # In der Luft: springen oder fallen, bis gelandet
         if not p.on_ground:
             if self.state != State.JUMP:
-                self._set(State.FALL, 1e9)
-            return self._intent()
+                self.set_state(State.FALL, 1e9)
+            return self.intent()
         if self.state in (State.JUMP, State.FALL):
             self.events.append("landed")
-            if self._caught_this_chase:
-                self._caught_this_chase = False
-                self._set(State.HAPPY, 1.8)
+            if self.after_landing is not None:
+                self.set_state(self.after_landing, 1.8)
+                self.after_landing = None
             else:
-                self._set(State.IDLE, 0.6)
+                self.set_state(State.IDLE, 0.6)
 
         if p.paused:
             return self._tick_paused(p)
 
-        # Automatisches Einschlafen bei Inaktivität / Aufwachen beim Tippen
-        if "idle_sleep" in p.features:
-            if p.user_idle >= p.idle_timeout:
-                if self.state != State.SLEEP:
-                    self.task = None
-                    self._set(State.SLEEP, 1e9)
-                    self._was_idle_sleep = True
-                return self._intent()
-            if self._was_idle_sleep and self.state == State.SLEEP and p.user_idle < 2.0:
-                self._was_idle_sleep = False
-                self.events.append("woke")
-                self._set(State.GROOM, 1.8)  # streckt/putzt sich nach dem Aufwachen
+        intent = self._run_behaviours("pre", dt, p)
+        if intent is not None:
+            return intent
 
         if self.state == State.SLEEP:
-            if self.forced_sleep > 0 or self._was_idle_sleep:
-                return self._intent()
-            if self.timer > 0:
-                return self._intent()
+            if self.forced_sleep > 0 or self.sleep_hold or self.timer > 0:
+                return self.intent()
             self.events.append("woke")
-            self._set(State.IDLE, 1.2)
+            self.set_state(State.IDLE, 1.2)
 
         if self.task is not None:
             return self._tick_task(dt, p)
 
         if self.state in ONE_SHOT and self.timer > 0:
-            return self._intent()
+            return self.intent()
 
-        # Mausjagd
-        if "mouse_chase" in p.features and p.cursor is not None:
-            intent = self._tick_chase(dt, p)
-            if intent is not None:
-                return intent
+        intent = self._run_behaviours("post", dt, p)
+        if intent is not None:
+            return intent
 
         # Unterwegs zu einem Ziel?
         if self.state in (State.WALK, State.RUN) and self.target_x is not None:
-            return self._walk_towards(self.target_x, p, run=self.state == State.RUN,
-                                      on_arrive=lambda: self._set(State.IDLE, 0.8 + self.rng.random()))
+            return self.walk_towards(self.target_x, p, run=self.state == State.RUN,
+                                     on_arrive=lambda: self.set_state(State.IDLE, 0.8 + self.rng.random()))
 
         if self.timer > 0:
-            return self._intent()
+            return self.intent()
 
         self._choose_next(p)
-        return self._intent(jump=self._pending_jump)
+        return self.intent(jump=self._pending_jump)
+
+    def _run_behaviours(self, phase: str, dt: float, p: Perception) -> Intent | None:
+        for behaviour in self.behaviours:
+            if behaviour.phase == phase:
+                intent = behaviour.step(self, dt, p)
+                if intent is not None:
+                    return intent
+        return None
 
     # ---------- Teilverhalten ----------
     def _tick_paused(self, p: Perception) -> Intent:
@@ -230,12 +238,12 @@ class Brain:
         if self.state not in (State.SLEEP, State.SIT, State.GROOM, State.IDLE) or self.timer <= 0:
             roll = self.rng.random()
             if self.state != State.SLEEP and roll < 0.6:
-                self._set(State.SLEEP, 60 + self.rng.random() * 120)
+                self.set_state(State.SLEEP, 60 + self.rng.random() * 120)
             elif roll < 0.85:
-                self._set(State.SIT, 20 + self.rng.random() * 40)
+                self.set_state(State.SIT, 20 + self.rng.random() * 40)
             else:
-                self._set(State.GROOM, 4)
-        return self._intent()
+                self.set_state(State.GROOM, 4)
+        return self.intent()
 
     def _tick_task(self, dt: float, p: Perception) -> Intent:
         task = self.task
@@ -245,68 +253,26 @@ class Brain:
             if self.timer <= 0:
                 self.task = None
                 self.events.append(f"done:{task.tag}")
-                self._set(State.IDLE, 1.0)
-            return self._intent()
+                self.set_state(State.IDLE, 1.0)
+            return self.intent()
         if task.timeout <= 0:
             self._arrive(task)
-            return self._intent()
+            return self.intent()
         target = min(max(task.x, p.walk_left), p.walk_right)
-        return self._walk_towards(target, p, run=task.run, on_arrive=lambda: self._arrive(task))
+        return self.walk_towards(target, p, run=task.run, on_arrive=lambda: self._arrive(task))
 
     def _arrive(self, task: _Task) -> None:
         self.events.append(f"arrived:{task.tag}")
         if task.then == State.SLEEP:
             self.send_to_sleep(task.then_duration)
         else:
-            self._set(task.then, task.then_duration)
+            self.set_state(task.then, task.then_duration)
 
-    def _tick_chase(self, dt: float, p: Perception) -> Intent | None:
-        assert p.cursor is not None
-        cx, cy = p.cursor
-        chasing = self.state == State.RUN and self.target_x is not None and self.chase_time > 0
-        if chasing:
-            self.chase_time -= dt
-            self.target_x = min(max(cx, p.walk_left), p.walk_right)
-            dx = cx - p.x
-            near = abs(dx) < 28
-            reachable = 0 < p.y - cy < 220
-            if near and p.cursor_still_for > 0.5 and reachable:
-                # Fangen: hochspringen zum Zeiger
-                self.chase_time = 0
-                self.chase_cooldown = 25 + 40 * (1 - self.playfulness)
-                self._caught_this_chase = True
-                self.events.append("caught")
-                self._set(State.JUMP, 1e9)
-                self.target_x = None
-                return self._intent(jump=(cx, cy + p.height * 0.7))
-            if near:
-                # Unter dem Zeiger warten und hochschauen
-                self.facing = 1 if dx >= 0 else -1
-                return Intent(animation="sit", vx=0.0, facing=self.facing)
-            if self.chase_time <= 0:
-                self.target_x = None
-                self.chase_cooldown = 15 + 30 * (1 - self.playfulness)
-                self._set(State.SIT, 2.0)
-                return self._intent()
-            return self._walk_towards(self.target_x, p, run=True, on_arrive=lambda: None)
-
-        if self.chase_cooldown > 0 or self.state in ONE_SHOT:
-            return None
-        if p.cursor_speed > 250 and abs(cx - p.x) < 900:
-            # Je verspielter, besser gelaunt und wacher, desto eher geht die Jagd los (~1×/s bei Höchstwerten)
-            interest = self.playfulness * (0.6 + p.mood / 250) * (0.5 + p.energy / 200)
-            if self.rng.random() < interest * dt * 1.5:
-                self.chase_time = 4 + 6 * self.playfulness
-                self.target_x = min(max(cx, p.walk_left), p.walk_right)
-                self._set(State.RUN, 1e9)
-                return self._walk_towards(self.target_x, p, run=True, on_arrive=lambda: None)
-        return None
-
-    def _walk_towards(self, target: float, p: Perception, run: bool, on_arrive) -> Intent:
+    def walk_towards(self, target: float, p: Perception, run: bool, on_arrive) -> Intent:
         dx = target - p.x
         if abs(dx) <= 4:
             on_arrive()
-            return self._intent()
+            return self.intent()
         self.facing = 1 if dx > 0 else -1
         speed = self.run_speed if run else self.walk_speed
         anim = "run" if run else "walk"
@@ -326,9 +292,9 @@ class Brain:
         if not wander:
             # Ohne Herumstreunen bleibt das Tier an Ort und Stelle
             if lazy > 0.9 and self.rng.random() < 0.3:
-                self._set(State.SLEEP, 30 + self.rng.random() * 60)
+                self.set_state(State.SLEEP, 30 + self.rng.random() * 60)
             else:
-                self._set(self.rng.choice([State.SIT, State.IDLE, State.SIT, State.GROOM]),
+                self.set_state(self.rng.choice([State.SIT, State.IDLE, State.SIT, State.GROOM]),
                           4 + self.rng.random() * 8)
             return
 
@@ -363,30 +329,30 @@ class Brain:
             if not (p.walk_left <= tx <= p.walk_right):
                 tx = p.x - direction * dist
             self.target_x = min(max(tx, p.walk_left), p.walk_right)
-            self._set(State.WALK, 1e9)
+            self.set_state(State.WALK, 1e9)
         elif choice == State.JUMP:
             self._pending_jump = self.rng.choice(p.jump_targets)
             self.facing = 1 if self._pending_jump[0] >= p.x else -1
-            self._set(State.JUMP, 1e9)
+            self.set_state(State.JUMP, 1e9)
         elif choice == State.SLEEP:
-            self._set(State.SLEEP, 40 + self.rng.random() * 90)
+            self.set_state(State.SLEEP, 40 + self.rng.random() * 90)
         elif choice == State.SIT:
-            self._set(State.SIT, 4 + self.rng.random() * 10)
+            self.set_state(State.SIT, 4 + self.rng.random() * 10)
         elif choice == State.SULK:
-            self._set(State.SULK, 8 + self.rng.random() * 8)
+            self.set_state(State.SULK, 8 + self.rng.random() * 8)
         elif choice == State.GROOM:
-            self._set(State.GROOM, 3 + self.rng.random() * 2)
+            self.set_state(State.GROOM, 3 + self.rng.random() * 2)
         elif choice == State.HAPPY:
-            self._set(State.HAPPY, 1.5)
+            self.set_state(State.HAPPY, 1.5)
         else:
-            self._set(State.IDLE, 2 + self.rng.random() * 4)
+            self.set_state(State.IDLE, 2 + self.rng.random() * 4)
 
     # ---------- Hilfen ----------
-    def _set(self, state: State, duration: float) -> None:
+    def set_state(self, state: State, duration: float) -> None:
         self.state = state
         self.timer = duration
 
-    def _intent(self, jump: tuple[float, float] | None = None) -> Intent:
+    def intent(self, jump: tuple[float, float] | None = None) -> Intent:
         return Intent(animation=ANIMATION_FOR[self.state], vx=0.0, facing=self.facing, jump_to=jump)
 
     def pop_events(self) -> list[str]:

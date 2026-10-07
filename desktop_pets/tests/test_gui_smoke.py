@@ -34,7 +34,7 @@ def test_app_starts_pauses_and_switches_pets(qapp, tmp_path):
     # Pause: Tier liegt im Körbchen, keine Sounds, keine Sprechblasen
     pa.toggle_pause()
     assert pa.modes.paused and pa.in_bed and pa.sound.blocked
-    pa._say("Test", "darf nicht erscheinen")
+    pa.say("Test", "darf nicht erscheinen")
     assert not pa.bubble.isVisible()
     pa.toggle_pause()
     assert not pa.in_bed and pa.pet_window.isVisible()
@@ -48,13 +48,25 @@ def test_app_starts_pauses_and_switches_pets(qapp, tmp_path):
 
     # Füttern: Napf erscheint, Hunger sinkt
     pa.needs.hunger = 80
-    pa.feed()
-    assert pa.bowl_window.isVisible()
+    needs = pa.features.get("needs")
+    needs.feed()
+    assert needs.bowl.isVisible()
     assert pa.needs.hunger < 80
+
+    # Körbchen ausblenden → Tray bietet „Körbchen einblenden“ an → wieder da
+    bed = pa.features.get("bed")
+    assert bed.window.isVisible()
+    bed.hide_by_user()
+    assert not bed.window.isVisible()
+    labels = [a.label for a in pa.features.menu_actions("tray")]
+    assert "Körbchen einblenden" in labels
+    bed.show_by_user()
+    assert bed.window.isVisible()
 
     # Feature umschalten wirkt sofort und bleibt gespeichert
     pa.features.set_enabled("bed", False)
-    assert not pa.bed_window.isVisible()
+    assert not bed.window.isVisible()
+    pa.settings.save()
     assert pa.settings.feature_enabled("bed", True) is False
 
     pa.open_settings()
@@ -78,7 +90,7 @@ def test_feeding_from_window_edge_goes_down_to_ground(qapp, tmp_path):
     pa.start()
     pa.features.set_enabled("window_walking", False)   # Testfenster nicht durch echte Fenster ersetzen
     pa.features.set_enabled("mouse_chase", False)
-    bed = pa.bed_window.bottom_center()
+    bed = pa.features.get("bed").bottom_center()
     ground = pa.world.ground_at(bed.x())
     # Ein „Fenster“ genau über Körbchen und Napf, das Tier steht oben drauf
     edge = Platform("win:test:0", ground.left, ground.right, ground.y - 300)
@@ -86,7 +98,7 @@ def test_feeding_from_window_edge_goes_down_to_ground(qapp, tmp_path):
     pa.body.x = float(bed.x())
     pa.body.place_on(edge)
     pa.needs.hunger = 80
-    pa.feed()
+    pa.features.get("needs").feed()
     for _ in range(200):          # ~6 s Spielzeit
         spin(30)
         if pa.body.support == ground.id:
@@ -95,8 +107,37 @@ def test_feeding_from_window_edge_goes_down_to_ground(qapp, tmp_path):
     # … und dann unten zum Napf laufen und fressen (Napf wird danach leer)
     for _ in range(400):
         spin(30)
-        if pa.bowl_window._overlay is None:
+        if pa.features.get("needs").bowl._overlay is None:
             break
-    assert pa.bowl_window._overlay is None, "Tier hat nicht gefressen"
+    assert pa.features.get("needs").bowl._overlay is None, "Tier hat nicht gefressen"
     assert pa.body.support == ground.id
+    pa.quit()
+
+
+def test_send_to_sleep_from_window_walks_into_bed(qapp, tmp_path):
+    """„Schlafen schicken“ auf einem Fenster: herunterspringen und ins Körbchen laufen (nicht teleportieren)."""
+    from desktop_pets.core.app import PetApp
+    from desktop_pets.pet.brain import State
+    from desktop_pets.pet.physics import Platform
+
+    pa = PetApp(qapp, settings_path=tmp_path / "settings.json")
+    pa.qapp.quit = lambda: None
+    pa.start()
+    pa.features.set_enabled("window_walking", False)
+    pa.features.set_enabled("mouse_chase", False)
+    bed = pa.features.get("bed")
+    target = bed.bottom_center()
+    ground = pa.world.ground_at(target.x())
+    edge = Platform("win:test:0", target.x() + 150, target.x() + 600, ground.y - 300)
+    pa.world.set_platforms([ground, edge])
+    pa.body.x = float(target.x() + 300)
+    pa.body.place_on(edge)
+    pa.send_to_sleep()
+    for _ in range(400):
+        spin(30)
+        if pa.brain.state == State.SLEEP and pa.body.support == ground.id:
+            break
+    assert pa.body.support == ground.id
+    assert pa.brain.state == State.SLEEP
+    assert bed.is_near(pa.body.x, pa.body.y)
     pa.quit()

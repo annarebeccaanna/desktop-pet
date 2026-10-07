@@ -1,9 +1,10 @@
 """Transparentes, rahmenloses Fenster, in dem das Tier gezeichnet wird.
 
-* Nur Pixel des Tiers sind anklickbar (``setMask`` aus dem aktuellen Frame),
-  transparente Bereiche lassen jeden Klick zum Fenster darunter durch.
+* Nur Pixel des Tiers sind anklickbar, transparente Bereiche lassen jeden Klick
+  zum Fenster darunter durch (Windows: von selbst bei durchscheinenden Fenstern;
+  andere Systeme: ``setMask`` aus dem aktuellen Frame).
 * Kein Taskleisteneintrag (``Qt.Tool``), stiehlt nie den Fokus.
-* Im Pause-Modus wird das Fenster ganz nach hinten gelegt.
+* Im Pause-Modus liegt das Fenster hinter allen Fenstern, aber über dem Desktop.
 """
 
 from __future__ import annotations
@@ -49,12 +50,12 @@ class _Base(QWidget):
         self._topmost = topmost
 
     def set_pinned_bottom(self, bottom: bool) -> None:
-        """Ganz nach hinten (Pause) oder wieder ganz nach vorn."""
+        """Auf den Desktop legen (hinter alle Fenster, über das Hintergrundbild) oder wieder nach vorn."""
         self._pin_bottom = bottom
         if IS_WINDOWS:
             hwnd = int(self.winId())
             if bottom:
-                zorder.send_to_bottom(hwnd)
+                zorder.send_to_desktop(hwnd)
             else:
                 zorder.set_topmost(hwnd, self._topmost)
         else:
@@ -67,10 +68,20 @@ class _Base(QWidget):
             if bottom:
                 self.lower()
 
-    def nativeEvent(self, event_type, message):  # noqa: N802
-        if self._pin_bottom:
-            zorder.pin_bottom_in_native_event(message)
-        return False, 0
+    @property
+    def pinned_bottom(self) -> bool:
+        return self._pin_bottom
+
+
+def apply_click_mask(widget: QWidget, region: QRegion) -> None:
+    """Klick-Durchlässigkeit außerhalb der Grafik.
+
+    Unter Windows sind transparente Pixel eines durchscheinenden Fensters (Layered
+    Window) ohnehin durchlässig – dort ist keine Maske nötig. Andere Systeme brauchen sie.
+    """
+    if IS_WINDOWS:
+        return
+    widget.setMask(region)
 
 
 class PetWindow(_Base):
@@ -162,7 +173,7 @@ class PetWindow(_Base):
                      p.pixmap.width(), p.pixmap.height())
 
     def _update_mask(self) -> None:
-        if self._frame is None:
+        if self._frame is None or IS_WINDOWS:
             return
         key = (id(self._frame), self._facing, len(self._particles))
         if key == self._mask_key and not self._particles:
@@ -174,7 +185,7 @@ class PetWindow(_Base):
             region = region.united(QRegion(self._particle_rect(p)))
         if region.isEmpty():
             region = QRegion(0, 0, 1, 1)
-        self.setMask(region)
+        apply_click_mask(self, region)
 
     def paintEvent(self, _e) -> None:  # noqa: N802
         p = QPainter(self)
@@ -329,7 +340,7 @@ class PropWindow(_Base):
         return base, occ, ov
 
     def _update_mask(self) -> None:
-        if self._pixmap.isNull():
+        if self._pixmap.isNull() or IS_WINDOWS:
             return
         base, occ, ov = self._layout_rects()
         region = QRegion(self._pixmap.mask())
@@ -339,7 +350,7 @@ class PropWindow(_Base):
                 r = QRegion(pm.mask())
                 r.translate(rect.topLeft())
                 region = region.united(r)
-        self.setMask(region)
+        apply_click_mask(self, region)
 
     def paintEvent(self, _e) -> None:  # noqa: N802
         p = QPainter(self)

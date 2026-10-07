@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.0 – Umbau & Absicherung für Windows
+
+**Behoben**
+- **Körbchen unsichtbar:** Es lag per `HWND_BOTTOM` „ganz unten“ – unter Windows 10/11 also hinter dem Desktop selbst (Hintergrundbild). Jetzt wird es direkt *über* dem obersten Desktop-Fenster (`Progman`/`WorkerW`) einsortiert und alle 2 s dort gehalten; nach „Desktop anzeigen“ (Win+D) liegt es wieder sichtbar darüber. Gleiches gilt für das Tier im Pause-Modus. Der Eingriff in jede Fensterverschiebung (`WM_WINDOWPOSCHANGING`) ist entfernt.
+- **Körbchen ausgeblendet = für immer weg:** Im Tray-Menü gibt es jetzt „Körbchen einblenden“.
+- **„Schlafen schicken“ auf einem Fenster:** Das Tier springt herunter und läuft ins Körbchen, statt hineinzuteleportieren (Teleport nur noch, wenn das Körbchen auf einem anderen Bildschirm liegt).
+- **Tier blieb auf hohen Fenstern hängen:** Auf einem Fenster läuft es jetzt ab und zu absichtlich über die Kante und fällt hinunter – egal wie hoch.
+
+**Umgebaut**
+- `core/app.py` von 856 auf ~570 Zeilen: Füttern/Napf/Quengeln → `features/needs.py`, Körbchen samt Fenster, Menü und Pause-Schlaf → `features/bed.py`, Mausjagd-Logik → `features/mouse_chase.py`, Einschlafen bei Inaktivität → `features/idle_sleep.py`, Streicheln → `features/behavior.py`, Plattformen → `core/platforms.py`.
+- Funktionen docken jetzt über feste Punkte an (`features/base.py`): eigenes Verhalten fürs Gehirn (`Behaviour`), Wahrnehmung ergänzen, auf Ereignisse reagieren, eigene Menüeinträge. Eine neue Funktion braucht keine Änderung mehr an `app.py` oder `brain.py`.
+- Unter Windows keine `setMask`-Berechnung mehr (transparente Pixel sind dort ohnehin klick-durchlässig).
+- Einstellungen werden gebündelt gespeichert (600 ms), nicht mehr bei jedem Schritt eines Schiebereglers; beim Beenden sofort.
+- Win32-Fehlercodes über `use_last_error=True`, Fenster-Handles typsicher übergeben.
+
+**Pixel-Schärfe (Korrektur der Abnahme 0.2.0):** Bei 100 % und 200 % Windows-Skalierung exakt scharf. Bei 125 %/150 % ist Größe 2× scharf, 1× und 3× können minimal ungleichmäßig sein. Nach Rückmeldung bewusst so belassen; das Häkchen in 0.2.0 war zu optimistisch.
+
+Tests: 73 (neu u. a. Desktop-Einsortierung, Über-die-Kante-Laufen, Schlafen schicken vom Fenster, Körbchen einblenden, gebündeltes Speichern).
+
 ## 0.2.1 – Fehlerbehebung
 
 - Füttern, während das Tier auf einem Fenster steht: Das Tier sprang hoch und landete sofort wieder auf derselben Fensterkante, statt zum Napf am Körbchen hinunterzugehen. Jetzt ignoriert ein absichtlicher Sprung nach unten alle Fensterkanten, bis das Tier am Boden ist (`Body.drop_to_ground`). Tests: `test_drop_through_ignores_window_edges_until_ground`, `test_feeding_from_window_edge_goes_down_to_ground`.
@@ -26,7 +45,7 @@
 - [x] Jedes Feature lässt sich im Dialog ein-/ausschalten, Änderung wirkt sofort und bleibt nach Neustart erhalten *(Test: `test_toggle_persists_and_survives_restart`, GUI-Smoke-Test)*
 - [x] Tierwechsel im Menü funktioniert ohne Neustart *(GUI-Smoke-Test)*
 - [x] Ein neues Tier-Paket im `pets/`-Ordner erscheint ohne Codeänderung *(Test: `test_new_pack_folder_is_discovered_without_code_change`)*
-- [x] Pixel-Art bleibt bei jeder Skalierung scharf: nur ganzzahlige Faktoren, Nearest-Neighbor
+- [~] Pixel-Art bleibt scharf: ganzzahlige Faktoren + Nearest-Neighbor; bei 125/150 % Windows-Skalierung nicht in jeder Größe exakt (siehe 0.3.0)
 - [x] Füttern zeigt Napf und Fress-Animation, Hunger sinkt sichtbar in der Statusleiste *(GUI-Smoke-Test)*
 - [x] Im Pause-Modus geht das Tier ins Körbchen und schläft dort *(GUI-Smoke-Test)*
 - [ ] Dialog und Menüs sehen auf Windows 10 und 11 identisch aus – **unter Windows prüfen** (unter Linux offscreen gerendert und mit den Mockups verglichen)

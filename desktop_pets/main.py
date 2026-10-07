@@ -18,7 +18,9 @@ def main(argv: list[str] | None = None) -> int:
     from .core.log import setup_logging
 
     log = setup_logging()
-    # Per-Monitor-DPI ist in Qt 6 Standard; ganzzahlig runden hält Pixel-Art scharf.
+    # Per-Monitor-DPI ist in Qt 6 Standard. PassThrough = echte Windows-Skalierung (125 %, 150 % …):
+    # Dialoge haben die richtige Größe; die Pixel-Art ist bei 100/200 % exakt scharf, bei
+    # Zwischenstufen je nach Tiergröße minimal ungleichmäßig (bewusst so belassen).
     QGuiApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
     app = QApplication(argv)
     app.setApplicationName(APP_NAME)

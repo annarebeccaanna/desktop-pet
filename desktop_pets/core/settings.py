@@ -98,6 +98,7 @@ class Settings:
     def __init__(self, path: Path | None, bus: EventBus | None = None) -> None:
         self.path = path
         self.bus = bus
+        self.saver: Callable[[], None] | None = None   # z. B. verzögertes Speichern (bündelt Schieberegler-Schritte)
         self._data: dict[str, Any] = copy.deepcopy(DEFAULTS)
 
     # ---------- Laden / Speichern ----------
@@ -160,7 +161,7 @@ class Settings:
             return
         node[parts[-1]] = copy.deepcopy(value)
         if save:
-            self.save()
+            (self.saver or self.save)()
         if self.bus is not None:
             self.bus.publish(SETTINGS_CHANGED, key=key, value=value)
 

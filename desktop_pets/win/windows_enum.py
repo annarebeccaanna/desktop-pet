@@ -85,8 +85,8 @@ def list_windows(min_w: int = 120, min_h: int = 60) -> list[WinRect]:
     import ctypes
     from ctypes import wintypes
 
-    user32 = ctypes.windll.user32
-    dwm = ctypes.windll.dwmapi
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    dwm = ctypes.WinDLL("dwmapi")
     own_pid = os.getpid()
     GWL_EXSTYLE = -20
     WS_EX_TOOLWINDOW = 0x00000080
@@ -98,7 +98,8 @@ def list_windows(min_w: int = 120, min_h: int = 60) -> list[WinRect]:
     buf = ctypes.create_unicode_buffer(256)
 
     @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
-    def callback(hwnd, _lparam):
+    def callback(raw, _lparam):
+        hwnd = ctypes.c_void_p(raw)
         if not user32.IsWindowVisible(hwnd) or user32.IsIconic(hwnd):
             return True
         pid = wintypes.DWORD()
@@ -123,7 +124,7 @@ def list_windows(min_w: int = 120, min_h: int = 60) -> list[WinRect]:
         if dwm.DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, ctypes.byref(rect), ctypes.sizeof(rect)) != 0:
             if not user32.GetWindowRect(hwnd, ctypes.byref(rect)):
                 return True
-        w = WinRect(int(hwnd or 0), rect.left, rect.top, rect.right, rect.bottom, title)
+        w = WinRect(int(raw or 0), rect.left, rect.top, rect.right, rect.bottom, title)
         if w.width >= min_w and w.height >= min_h:
             result.append(w)
         return True
@@ -139,16 +140,17 @@ def foreground_is_fullscreen(screen_rects: list[tuple[int, int, int, int]]) -> b
     import ctypes
     from ctypes import wintypes
 
-    user32 = ctypes.windll.user32
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    user32.GetForegroundWindow.restype = ctypes.c_void_p
     hwnd = user32.GetForegroundWindow()
     if not hwnd:
         return False
     buf = ctypes.create_unicode_buffer(64)
-    user32.GetClassNameW(hwnd, buf, 64)
+    user32.GetClassNameW(ctypes.c_void_p(hwnd), buf, 64)
     if buf.value in _IGNORED_CLASSES:
         return False
     rect = wintypes.RECT()
-    if not user32.GetWindowRect(hwnd, ctypes.byref(rect)):
+    if not user32.GetWindowRect(ctypes.c_void_p(hwnd), ctypes.byref(rect)):
         return False
     return any(rect.left <= l and rect.top <= t and rect.right >= r and rect.bottom >= b
                for l, t, r, b in screen_rects)

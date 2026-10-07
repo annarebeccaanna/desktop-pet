@@ -3,6 +3,17 @@
 Jede Funktion ist eine Unterklasse von :class:`Feature`, die mit ``@register``
 angemeldet wird. Der Einstellungsdialog baut seine Schalterliste automatisch
 daraus. Fehler in einer Funktion schalten nur diese ab (siehe FeatureManager).
+
+Eine Funktion bringt alles in ihrer eigenen Datei mit – über diese Andockpunkte:
+
+* ``behaviours()``      Verhalten fürs Gehirn (pet/brain.py → ``Behaviour``)
+* ``contribute(p)``     Wahrnehmung ergänzen (z. B. erreichbare Fensterkanten)
+* ``on_brain_event(e)`` auf Ereignisse reagieren ("petted", "arrived:feed", …)
+* ``menu_actions(w)``   Einträge im Tray- ("tray") oder Tier-Menü ("pet")
+* ``on_sprites_changed()`` / ``on_settings_changed(key, value)`` / ``on_mode_changed(mode)``
+
+Nur ``enabled`` Funktionen werden gefragt; für ``behaviours``/``contribute`` nur
+``active`` (also im Pause-Modus nur die erlaubten).
 """
 
 from __future__ import annotations
@@ -36,6 +47,15 @@ class Option:
     choices: list[tuple[str, str]] = field(default_factory=list)   # (wert, anzeige)
 
 
+@dataclass
+class MenuAction:
+    label: str
+    callback: Any
+    enabled: bool = True
+    order: int = 50          # Position im Menü (siehe ui/tray.py)
+    shortcut: str = ""       # nur Anzeige, z. B. "Strg+Alt+T"
+
+
 class Feature:
     id: str = ""
     name: str = ""
@@ -64,6 +84,26 @@ class Feature:
 
     def on_mode_changed(self, mode: "Mode") -> None:
         """Optional: Moduswechsel (Normal/Pause/Schlafen)."""
+
+    def behaviours(self) -> list:
+        """Optional: Verhalten fürs Gehirn (nur solange aktiv)."""
+        return []
+
+    def contribute(self, perception) -> None:
+        """Optional: Wahrnehmung des Tiers ergänzen (nur solange aktiv)."""
+
+    def on_brain_event(self, event: str) -> None:
+        """Optional: Ereignis aus dem Gehirn ("petted", "caught", "arrived:<tag>", "done:<tag>", …)."""
+
+    def menu_actions(self, where: str) -> list[MenuAction]:
+        """Optional: Menüeinträge für "tray" oder "pet"."""
+        return []
+
+    def on_sprites_changed(self) -> None:
+        """Optional: Tier, Größe oder Farbe hat sich geändert."""
+
+    def on_settings_changed(self, key: str, value: Any) -> None:
+        """Optional: eine Einstellung hat sich geändert (key "*" = alles neu geladen)."""
 
     # Hilfen -----------------------------------------------------------------
     def option(self, key: str) -> Any:

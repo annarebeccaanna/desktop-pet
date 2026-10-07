@@ -203,8 +203,18 @@ def test_color_map():
 
 
 # ---------- Gehirn ----------
-def brain(seed=1, **kw):
-    return Brain(rng=random.Random(seed), **kw)
+def brain(seed=1, behaviours=True, chase=True, idle=True, **kw):
+    """Gehirn mit den Verhaltensweisen der Funktionen, wie die App sie einklinkt."""
+    from desktop_pets.features.idle_sleep import IdleSleepBehaviour
+    from desktop_pets.features.mouse_chase import ChaseBehaviour
+
+    b = Brain(rng=random.Random(seed), **kw)
+    if behaviours:
+        if idle:
+            b.behaviours.append(IdleSleepBehaviour(timeout=300))
+        if chase:
+            b.behaviours.append(ChaseBehaviour())
+    return b
 
 
 def perc(**kw):
@@ -247,7 +257,7 @@ def test_pause_means_no_movement():
 
 def test_idle_sleep_and_wake_on_input():
     b = brain(6)
-    _, intent = run(b, perc(user_idle=400, idle_timeout=300), 1)
+    _, intent = run(b, perc(user_idle=400), 1)
     assert b.state == State.SLEEP and intent.animation == "sleep"
     b.tick(1 / 30, perc(user_idle=0.2))
     assert b.state != State.SLEEP
@@ -255,15 +265,15 @@ def test_idle_sleep_and_wake_on_input():
 
 
 def test_idle_sleep_disabled_keeps_awake():
-    b = brain(6)
+    b = brain(6, idle=False)
     feats = ALL - {"idle_sleep", "wander"}
-    run(b, perc(user_idle=4000, idle_timeout=300, features=feats), 2)
+    run(b, perc(user_idle=4000, features=feats), 2)
     assert b.state != State.SLEEP or b.timer < 1e8
 
 
 def test_mouse_chase_runs_to_cursor_and_catches_it():
     b = brain(7, playfulness=1.0)
-    b.chase_cooldown = 0
+    b.behaviours[-1].cooldown = 0
     x = 300.0
     caught = False
     for i in range(30 * 20):
@@ -281,8 +291,7 @@ def test_mouse_chase_runs_to_cursor_and_catches_it():
 
 
 def test_mouse_chase_off_never_runs():
-    b = brain(8, playfulness=1.0)
-    b.chase_cooldown = 0
+    b = brain(8, playfulness=1.0, chase=False)
     feats = ALL - {"mouse_chase"}
     states, _ = run(b, perc(cursor=(1500, 700), cursor_speed=2000, features=feats), 30)
     assert State.RUN not in states
@@ -357,3 +366,49 @@ def test_drop_through_ignores_window_edges_until_ground():
         w.step(b, 1 / 30)
     assert b.support == "ground"
     assert b.drop_through is False   # nach der Landung wieder normal
+
+
+def test_after_catch_pet_is_happy_on_landing():
+    b = brain(14)
+    b.after_landing = State.HAPPY
+    b.set_state(State.JUMP, 1e9)
+    b.tick(1 / 30, perc(on_ground=False))
+    b.tick(1 / 30, perc(on_ground=True))
+    assert b.state == State.HAPPY and b.after_landing is None
+
+
+def test_walk_off_edge_from_window():
+    from desktop_pets.features.window_walking import WalkOffEdge
+
+    b = brain(15, behaviours=False)
+    b.behaviours.append(WalkOffEdge())
+    w = World()
+    w.set_platforms([Platform("ground", 0, 2000, 800, solid=True), Platform("win", 400, 900, 300)])
+    body = Body(x=650, y=300, width=40, height=64)
+    body.place_on(w.platforms["win"])
+    fell = False
+    for _ in range(30 * 120):
+        left, right = w.walk_span(body)
+        p = perc(x=body.x, y=body.y, on_ground=body.on_ground, walk_left=left, walk_right=right, cursor=None,
+                 features=frozenset({"wander"}), on_window=body.support == "win", height=64)
+        intent = b.tick(1 / 30, p)
+        if body.on_ground:
+            body.vx = intent.vx
+        w.step(body, 1 / 30)
+        if body.support == "ground":
+            fell = True
+            break
+    assert fell, "Tier ist nie vom Fenster heruntergelaufen"
+
+
+def test_idle_sleep_releases_when_woken_otherwise():
+    from desktop_pets.features.idle_sleep import IdleSleepBehaviour
+
+    beh = IdleSleepBehaviour(timeout=300)
+    b = brain(16, behaviours=False)
+    b.behaviours.append(beh)
+    b.tick(1 / 30, perc(user_idle=400))
+    assert b.sleep_hold and b.state == State.SLEEP
+    b.wake()                      # z. B. per Klick
+    b.tick(1 / 30, perc(user_idle=0.5))
+    assert not b.sleep_hold and not beh.holding

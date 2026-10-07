@@ -8,6 +8,7 @@ from PySide6.QtCore import QPoint, Qt
 from PySide6.QtGui import QAction, QActionGroup, QIcon, QPixmap
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QMenu, QSystemTrayIcon, QWidget, QWidgetAction
 
+from ..features.base import MenuAction
 from ..win import hotkeys as hk
 from . import theme as theme_mod
 from .retro import pixel_label
@@ -102,32 +103,27 @@ class TrayController:
         paused = app.modes.paused
         _header(m, app.icon_pixmap(16), "Desktop Pets")
 
-        act_pause = QAction(f"Pause-Modus\t{_hotkey_text(app.settings.get('hotkeys.toggle_pause'))}", m)
-        act_pause.setCheckable(True)
-        act_pause.setChecked(paused)
-        f = act_pause.font()
-        f.setBold(paused)
-        act_pause.setFont(f)
-        act_pause.triggered.connect(lambda _=False: app.toggle_pause())
-        m.addAction(act_pause)
-
-        pets_menu = m.addMenu("Tier wählen")
-        group = QActionGroup(pets_menu)
-        for pack in app.packs.values():
-            a = QAction(QIcon(app.icon_pixmap(16, pack.id)), pack.name, pets_menu)
-            a.setCheckable(True)
-            a.setChecked(pack.id == app.pack.id)
-            a.triggered.connect(lambda _=False, pid=pack.id: app.switch_pet(pid))
-            group.addAction(a)
-            pets_menu.addAction(a)
-
-        act_feed = m.addAction("Füttern", app.feed)
-        act_feed.setEnabled(not paused and app.features.is_active("needs"))
-        m.addAction("Tier zu mir rufen", app.call_pet).setEnabled(not paused)
-        if app.features.is_enabled("bed"):
-            m.addAction("Ins Körbchen schicken", app.send_to_bed).setEnabled(not paused)
-        hide_text = "Tier einblenden" if app.pet_hidden else "Tier ausblenden"
-        m.addAction(f"{hide_text}\t{_hotkey_text(app.settings.get('hotkeys.toggle_visible'))}", app.toggle_visible)
+        core = [
+            MenuAction(f"Pause-Modus\t{_hotkey_text(app.settings.get('hotkeys.toggle_pause'))}",
+                       app.toggle_pause, order=10),
+            MenuAction("Tier zu mir rufen", app.call_pet, enabled=not paused, order=40),
+            MenuAction(f"{'Tier einblenden' if app.pet_hidden else 'Tier ausblenden'}"
+                       f"\t{_hotkey_text(app.settings.get('hotkeys.toggle_visible'))}", app.toggle_visible, order=50),
+        ]
+        entries = sorted(core + app.features.menu_actions("tray"), key=lambda a: a.order)
+        for entry in entries:
+            if entry.order == 10:
+                act = QAction(entry.label, m)
+                act.setCheckable(True)
+                act.setChecked(paused)
+                f = act.font()
+                f.setBold(paused)
+                act.setFont(f)
+                act.triggered.connect(lambda _=False: app.toggle_pause())
+                m.addAction(act)
+                self._add_pet_chooser(m)
+                continue
+            _add(m, entry)
         m.addSeparator()
         m.addAction("Einstellungen …", app.open_settings)
         m.addAction("Über Desktop Pets", app.open_about)
@@ -140,22 +136,41 @@ class TrayController:
             fields.append(f"{pending} Meldung{'en' if pending != 1 else ''} warten")
         _footer(m, fields)
 
+    def _add_pet_chooser(self, m: QMenu) -> None:
+        app = self.app
+        pets_menu = m.addMenu("Tier wählen")
+        group = QActionGroup(pets_menu)
+        for pack in app.packs.values():
+            a = QAction(QIcon(app.icon_pixmap(16, pack.id)), pack.name, pets_menu)
+            a.setCheckable(True)
+            a.setChecked(pack.id == app.pack.id)
+            a.triggered.connect(lambda _=False, pid=pack.id: app.switch_pet(pid))
+            group.addAction(a)
+            pets_menu.addAction(a)
+
+
+def _add(menu: QMenu, entry: MenuAction) -> None:
+    label = entry.label + (f"\t{entry.shortcut}" if entry.shortcut else "")
+    act = menu.addAction(label)
+    act.triggered.connect(lambda _=False, cb=entry.callback: cb())
+    act.setEnabled(entry.enabled)
+
 
 def build_pet_menu(app: "PetApp") -> QMenu:
-    """Rechtsklick auf das Tier: Füttern, Streicheln, Schlafen schicken, Pause-Modus."""
+    """Rechtsklick auf das Tier: Füttern, Streicheln, Schlafen schicken, Pause-Modus …"""
     m = QMenu()
     paused = app.modes.paused
     mood = app.needs.mood_label if app.features.is_enabled("needs") else ""
     mood_text = {"super": "Super Laune", "gut": "Gute Laune", "okay": "Geht so", "mies": "Schlechte Laune"}.get(mood, "")
     right = pixel_label(mood_text, color="pixel_green" if mood in ("super", "gut") else "pixel_red")
     _header(m, app.icon_pixmap(16), app.pet_name, right=right, dark=False)
-    a = m.addAction("Füttern", app.feed)
-    a.setEnabled(not paused and app.features.is_active("needs"))
-    m.addAction("Streicheln", app.pet_pet)
+    core = [MenuAction("Streicheln", app.pet_pet, order=20)]
     if app.is_sleeping:
-        m.addAction("Aufwecken", app.wake_pet)
+        core.append(MenuAction("Aufwecken", app.wake_pet, enabled=not paused, order=40))
     else:
-        m.addAction("Schlafen schicken", app.send_to_bed)
+        core.append(MenuAction("Schlafen schicken", app.send_to_sleep, enabled=not paused, order=40))
+    for entry in sorted(core + app.features.menu_actions("pet"), key=lambda a: a.order):
+        _add(m, entry)
     m.addSeparator()
     act = QAction(f"Pause-Modus\t{_hotkey_text(app.settings.get('hotkeys.toggle_pause'))}", m)
     act.setCheckable(True)
@@ -163,14 +178,6 @@ def build_pet_menu(app: "PetApp") -> QMenu:
     act.triggered.connect(lambda _=False: app.toggle_pause())
     m.addAction(act)
     m.addAction("Einstellungen …", app.open_settings)
-    return m
-
-
-def build_bed_menu(app: "PetApp") -> QMenu:
-    m = QMenu()
-    m.addAction(f"{app.pack.bed_name} verschieben", app.start_bed_move)
-    m.addAction(f"{app.pack.bed_name} ausblenden", app.hide_bed)
-    m.addAction("Tier hineinschicken", app.send_to_bed).setEnabled(not app.modes.paused)
     return m
 
 

@@ -158,3 +158,27 @@ def test_real_registry_chaos_is_off_by_default():
         assert REGISTRY[fid].default_enabled is False
     for fid in ("wander", "mouse_chase", "idle_sleep", "petting"):
         assert REGISTRY[fid].default_enabled is True and REGISTRY[fid].available
+
+
+# ---------- Z-Reihenfolge: über dem Desktop statt ganz unten ----------
+def test_desktop_insert_after_places_just_above_desktop():
+    from desktop_pets.win.zorder import HWND_BOTTOM, HWND_TOP, desktop_insert_after
+
+    z = [(10, "Notepad"), (20, "Chrome_WidgetWin_1"), (99, "Bed"), (30, "WorkerW"), (40, "Progman")]
+    assert desktop_insert_after(z, 99) is None                 # liegt schon richtig
+    z2 = [(10, "Notepad"), (20, "Chrome"), (30, "WorkerW"), (99, "Bed"), (40, "Progman")]
+    assert desktop_insert_after(z2, 99) == 20                  # hinter Chrome, vor den Desktop
+    z3 = [(30, "WorkerW"), (10, "Notepad"), (99, "Bed")]       # nach Win+D liegt der Desktop oben
+    assert desktop_insert_after(z3, 99) == HWND_TOP
+    assert desktop_insert_after([(10, "Notepad")], 99) == HWND_BOTTOM   # kein Desktop erkennbar
+
+
+def test_settings_saver_bundles_writes(tmp_path):
+    s = Settings(tmp_path / "s.json")
+    calls = []
+    s.saver = lambda: calls.append(1)
+    for v in range(10):
+        s.set("general.volume", v)
+    assert len(calls) == 10 and not (tmp_path / "s.json").exists()   # nur vorgemerkt, nicht geschrieben
+    s.save()
+    assert Settings(tmp_path / "s.json").load().get("general.volume") == 9

@@ -1,9 +1,9 @@
-"""Verhalten & Persönlichkeit: Herumstreunen, Streicheln, Bedürfnisse,
-Tagesrhythmus, Gedächtnis, Umfärben."""
+"""Verhalten & Persönlichkeit: Herumstreunen, Streicheln, Tagesrhythmus,
+Gedächtnis, Umfärben. (Bedürfnisse: needs.py, Körbchen: bed.py, …)"""
 
 from __future__ import annotations
 
-from .base import Feature, Option, register
+from .base import Feature, register
 
 
 @register
@@ -27,30 +27,40 @@ class Petting(Feature):
     allowed_in_pause = True     # still: keine Sounds
     pause_label = "still"
 
+    STROKE_NEEDED = 140.0       # px Mausweg über dem Tier
+    COOLDOWN = 1.2
 
-@register
-class NeedsFeature(Feature):
-    order = 50
-    id = "needs"
-    name = "Bedürfnisse"
-    description = "Hunger, Laune, Energie. Füttern per Rechtsklick"
-    default_enabled = True
-    allowed_in_pause = False    # Werte ruhen im Pause-Modus
-    pause_label = "ruht"
-    options = [
-        Option("speed", "Tempo", "normal", kind="choice",
-               choices=[("slow", "gemütlich"), ("normal", "normal"), ("fast", "schnell")]),
-        Option("nag", "Quengeln bei Hunger (kleine Sprechblase)", True, kind="bool"),
-    ]
+    def __init__(self, ctx) -> None:
+        super().__init__(ctx)
+        self._stroke = 0.0
+        self._cooldown = 0.0
+        self._connected = False
 
-    RATES = {"slow": 0.5, "normal": 1.0, "fast": 2.5}
+    def enable(self) -> None:
+        app = self.ctx.app
+        if app is not None and not self._connected:
+            app.pet_window.stroked.connect(self._on_stroke)
+            self._connected = True
+
+    def disable(self) -> None:
+        app = self.ctx.app
+        if app is not None and self._connected:
+            app.pet_window.stroked.disconnect(self._on_stroke)
+            self._connected = False
 
     def tick(self, dt: float) -> None:
-        if not self.active:
-            return
+        self._cooldown = max(0.0, self._cooldown - dt)
+        self._stroke = max(0.0, self._stroke - 60.0 * dt)
+
+    def _on_stroke(self, dist: float) -> None:
         app = self.ctx.app
-        if app is not None:
-            app.tick_needs(dt, self.RATES.get(self.option("speed"), 1.0))
+        if not self.active or app is None or app.dragging:
+            return
+        self._stroke += dist
+        if self._stroke >= self.STROKE_NEEDED and self._cooldown <= 0:
+            self._stroke = 0.0
+            self._cooldown = self.COOLDOWN
+            app.pet_pet()
 
 
 @register

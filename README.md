@@ -75,9 +75,10 @@ Ablegen in `desktop_pets/pets/` oder in `%APPDATA%\DesktopPets\pets\`. Fehlt ein
 ```
 desktop_pets/
 ├── main.py            Einstieg
-├── core/              app (Steuerung), settings, events, modes, sound, paths, log
+├── core/              app (Steuerung, Takt), platforms, settings, events, modes, sound, paths, log
 ├── pet/               pet_window, animator, brain, needs, physics, pack, sprites, recolor
-├── features/          eine Datei je Funktion (base.Feature + Registry)
+├── features/          eine Datei je Funktion – mit ihrer ganzen Logik, ihren Fenstern und Menüeinträgen
+│                      (base.Feature: behaviours, contribute, on_brain_event, menu_actions …)
 ├── win/               capture, hotkeys, idle, windows_enum, zorder, dwm, autostart
 ├── ui/                tray, settings_dialog, speech_bubble, retro (Titelleiste usw.), theme, about
 ├── themes/            retro_xp.qss + retro_xp.json

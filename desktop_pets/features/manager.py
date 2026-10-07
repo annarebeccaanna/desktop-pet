@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..core.events import FEATURE_TOGGLED, MODE_CHANGED
+from ..core.events import FEATURE_TOGGLED, MODE_CHANGED, SETTINGS_CHANGED
 from ..core.log import get_logger
 from .base import CATEGORIES, REGISTRY, Feature
 
@@ -26,6 +26,7 @@ class FeatureManager:
                 log.exception("Funktion %s konnte nicht erzeugt werden", fid)
                 self.failed[fid] = str(exc)
         ctx.bus.subscribe(MODE_CHANGED, self._on_mode_changed)
+        ctx.bus.subscribe(SETTINGS_CHANGED, self._on_settings_changed)
 
     # ---------- Abfragen ----------
     def get(self, fid: str) -> Feature | None:
@@ -92,6 +93,35 @@ class FeatureManager:
             if f.enabled:
                 self._guard(f, "tick", f.tick, dt)
 
+    # ---------- Andockpunkte ----------
+    def behaviours(self) -> list:
+        out = []
+        for f in list(self.features.values()):
+            if f.active:
+                self._guard(f, "behaviours", lambda feat=f: out.extend(feat.behaviours()))
+        return out
+
+    def contribute(self, perception) -> None:
+        for f in list(self.features.values()):
+            if f.active:
+                self._guard(f, "contribute", f.contribute, perception)
+
+    def dispatch(self, hook: str, *args) -> None:
+        """Ruft ``hook`` bei allen eingeschalteten Funktionen auf (Fehler schalten nur diese ab)."""
+        for f in list(self.features.values()):
+            if f.enabled:
+                self._guard(f, hook, getattr(f, hook), *args)
+
+    def menu_actions(self, where: str) -> list:
+        out = []
+        for f in self.features.values():
+            if f.enabled:
+                try:
+                    out.extend(f.menu_actions(where))
+                except Exception:  # noqa: BLE001
+                    log.exception("Menüeinträge von %s fehlerhaft", f.id)
+        return out
+
     # ---------- intern ----------
     def _enable(self, f: Feature) -> None:
         f.enabled = True
@@ -117,6 +147,9 @@ class FeatureManager:
             self.failed[f.id] = f"{type(exc).__name__}: {exc}"
             self._disable(f)
             return False
+
+    def _on_settings_changed(self, key, value) -> None:
+        self.dispatch("on_settings_changed", key, value)
 
     def _on_mode_changed(self, mode, previous) -> None:  # noqa: ARG002
         for f in list(self.features.values()):

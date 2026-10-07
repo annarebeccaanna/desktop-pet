@@ -1,4 +1,12 @@
-"""Z-Reihenfolge: Fenster ganz nach oben (topmost) oder ganz nach hinten."""
+"""Z-Reihenfolge: Fenster ganz nach vorn (topmost) oder „auf den Desktop“.
+
+„Auf den Desktop“ heißt: hinter allen normalen Fenstern, aber *über* dem Desktop
+selbst. ``HWND_BOTTOM`` wäre zu tief – ganz unten liegt unter Windows 10/11 der
+Desktop (``Progman``/``WorkerW``), und das Fenster verschwände hinter dem
+Hintergrundbild. Deshalb wird das Fenster direkt über dem obersten
+Desktop-Fenster einsortiert. Nach „Desktop anzeigen“ (Win+D) liegt der Desktop
+oben – dann kommt das Fenster wieder darüber und bleibt sichtbar.
+"""
 
 from __future__ import annotations
 
@@ -14,64 +22,73 @@ SWP_NOACTIVATE = 0x0010
 SWP_NOOWNERZORDER = 0x0200
 _FLAGS = SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOOWNERZORDER
 
+DESKTOP_CLASSES = {"Progman", "WorkerW"}
+
+
+def desktop_insert_after(zorder: list[tuple[int, str]], own: int) -> int | None:
+    """Nach welchem Fenster ``own`` einsortiert werden muss, um direkt über dem Desktop zu liegen.
+
+    ``zorder``: sichtbare Top-Level-Fenster als (hwnd, Klassenname), oberstes zuerst.
+    Gibt None zurück, wenn ``own`` schon richtig liegt; ``HWND_TOP``, wenn über dem
+    Desktop nichts anderes liegt; ``HWND_BOTTOM`` als Rückfall ohne erkennbaren Desktop.
+    """
+    others = [(h, c) for h, c in zorder]
+    desk = next((i for i, (_h, c) in enumerate(others) if c in DESKTOP_CLASSES), None)
+    if desk is None:
+        return HWND_BOTTOM
+    above = [h for h, _c in others[:desk]]
+    if above and above[-1] == own:
+        return None
+    above = [h for h in above if h != own]
+    if not above:
+        return HWND_TOP
+    return above[-1]
+
+
+def _user32():
+    import ctypes
+
+    return ctypes.WinDLL("user32", use_last_error=True)
+
 
 def _set_pos(hwnd: int, after: int) -> bool:
     if not IS_WINDOWS or not hwnd:
         return False
     import ctypes
 
-    return bool(ctypes.windll.user32.SetWindowPos(ctypes.c_void_p(hwnd), ctypes.c_void_p(after), 0, 0, 0, 0, _FLAGS))
+    return bool(_user32().SetWindowPos(ctypes.c_void_p(hwnd), ctypes.c_void_p(after), 0, 0, 0, 0, _FLAGS))
 
 
 def set_topmost(hwnd: int, topmost: bool) -> bool:
     return _set_pos(hwnd, HWND_TOPMOST if topmost else HWND_NOTOPMOST)
 
 
-def send_to_bottom(hwnd: int) -> bool:
-    """Hinter alle anderen Fenster (wie ein Desktop-Icon)."""
-    _set_pos(hwnd, HWND_NOTOPMOST)
-    return _set_pos(hwnd, HWND_BOTTOM)
-
-
-WM_WINDOWPOSCHANGING = 0x0046
-SWP_NOZORDER = 0x0004
-
-
-_WINDOWPOS = None
-
-
-def _windowpos_type():
-    global _WINDOWPOS
-    if _WINDOWPOS is None:
-        import ctypes
-        from ctypes import wintypes
-
-        class WINDOWPOS(ctypes.Structure):
-            _fields_ = [("hwnd", wintypes.HWND), ("hwndInsertAfter", wintypes.HWND),
-                        ("x", ctypes.c_int), ("y", ctypes.c_int), ("cx", ctypes.c_int), ("cy", ctypes.c_int),
-                        ("flags", wintypes.UINT)]
-
-        _WINDOWPOS = WINDOWPOS
-    return _WINDOWPOS
-
-
-def pin_bottom_in_native_event(message: int) -> None:
-    """In ``nativeEvent`` aufrufen: hält das Fenster bei jeder Z-Änderung ganz unten.
-
-    Setzt in ``WM_WINDOWPOSCHANGING`` das Ziel auf ``HWND_BOTTOM`` – so kommt das
-    Fenster auch nach einem Klick nicht wieder nach vorn (wie ein Desktop-Icon).
-    """
-    if not IS_WINDOWS:
-        return
+def _visible_zorder() -> list[tuple[int, str]]:
+    import ctypes
     from ctypes import wintypes
 
-    try:
-        msg = wintypes.MSG.from_address(int(message))
-    except (TypeError, ValueError):
-        return
-    if msg.message != WM_WINDOWPOSCHANGING or not msg.lParam:
-        return
-    pos = _windowpos_type().from_address(msg.lParam)
-    if pos.flags & SWP_NOZORDER:
-        return
-    pos.hwndInsertAfter = HWND_BOTTOM
+    user32 = _user32()
+    out: list[tuple[int, str]] = []
+    buf = ctypes.create_unicode_buffer(64)
+
+    @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    def cb(raw, _lp):
+        hwnd = ctypes.c_void_p(raw)
+        if user32.IsWindowVisible(hwnd):
+            user32.GetClassNameW(hwnd, buf, 64)
+            out.append((int(raw or 0), buf.value))
+        return True
+
+    user32.EnumWindows(cb, 0)
+    return out
+
+
+def send_to_desktop(hwnd: int) -> bool:
+    """Hinter alle normalen Fenster, aber über den Desktop (wie ein Desktop-Icon)."""
+    if not IS_WINDOWS or not hwnd:
+        return False
+    _set_pos(hwnd, HWND_NOTOPMOST)
+    after = desktop_insert_after(_visible_zorder(), hwnd)
+    if after is None:
+        return True
+    return _set_pos(hwnd, after)
