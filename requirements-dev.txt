@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest>=8
+Pillow>=10        # nur für tools/make_sprites.py
+pyinstaller>=6    # nur für den .exe-Build
