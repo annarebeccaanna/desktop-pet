@@ -815,8 +815,7 @@ class PetApp(QObject):
         """Steht das Tier auf einem Fenster, das Ziel liegt aber am Boden: herunterspringen."""
         plat = self.world.platforms.get(self.body.support or "")
         if plat is not None and not plat.solid and abs(plat.y - target.y()) > 8:
-            self.body.support = None
-            self.body.vy = -200.0
+            self.body.drop_to_ground()
 
     def _teleport(self, x: float, y: float) -> None:
         self.body.x, self.body.y = float(x), float(y)

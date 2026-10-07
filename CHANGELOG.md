@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 – Fehlerbehebung
+
+- Füttern, während das Tier auf einem Fenster steht: Das Tier sprang hoch und landete sofort wieder auf derselben Fensterkante, statt zum Napf am Körbchen hinunterzugehen. Jetzt ignoriert ein absichtlicher Sprung nach unten alle Fensterkanten, bis das Tier am Boden ist (`Body.drop_to_ground`). Tests: `test_drop_through_ignores_window_edges_until_ground`, `test_feeding_from_window_edge_goes_down_to_ground`.
+
 ## 0.2.0 – Phase 2: Menüs & Tiere
 
 **Neu**

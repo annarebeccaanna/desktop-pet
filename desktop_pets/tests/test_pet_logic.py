@@ -344,3 +344,16 @@ def test_dragging_overrides_everything():
     b.end_drag()
     b.tick(1 / 30, perc(on_ground=False))
     assert b.state == State.FALL
+
+
+def test_drop_through_ignores_window_edges_until_ground():
+    w = World()
+    w.set_platforms([Platform("ground", 0, 1000, 800, solid=True),
+                     Platform("win", 200, 600, 400), Platform("lower", 200, 600, 600)])
+    b = Body(x=300, y=400)
+    b.place_on(w.platforms["win"])
+    b.drop_to_ground()
+    for _ in range(90):
+        w.step(b, 1 / 30)
+    assert b.support == "ground"
+    assert b.drop_through is False   # nach der Landung wieder normal

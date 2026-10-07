@@ -34,6 +34,7 @@ class Body:
     vx: float = 0.0
     vy: float = 0.0
     support: str | None = None        # id der Plattform, auf der der Körper steht
+    drop_through: bool = False        # fällt absichtlich zum Boden: Fensterkanten ignorieren
     _support_offset: float = 0.0      # x relativ zur linken Kante der Plattform
 
     @property
@@ -44,7 +45,15 @@ class Body:
         self.y = platform.y
         self.vy = 0.0
         self.support = platform.id
+        self.drop_through = False
         self._support_offset = self.x - platform.left
+
+    def drop_to_ground(self, hop: float = -200.0) -> None:
+        """Von einer Fensterkante hinunter bis zum Boden (z. B. zum Napf am Körbchen)."""
+        self.support = None
+        self.vx = 0.0
+        self.vy = hop
+        self.drop_through = True
 
 
 def jump_velocity(dx: float, dy: float, margin: float = 24.0, gravity: float = GRAVITY) -> tuple[float, float]:
@@ -134,7 +143,7 @@ class World:
             body.x = new_x
             body.y = new_y
             if body.vy >= 0:
-                landing = self._landing(body.x, prev_y, new_y)
+                landing = self._landing(body.x, prev_y, new_y, solid_only=body.drop_through)
                 if landing is not None:
                     body.x = min(max(body.x, landing.left), landing.right)
                     body.place_on(landing)
@@ -167,8 +176,9 @@ class World:
                 return p
         return None
 
-    def _landing(self, x: float, prev_y: float, new_y: float) -> Platform | None:
-        cands = [p for p in self.platforms.values() if p.spans(x) and prev_y - 1 <= p.y <= new_y]
+    def _landing(self, x: float, prev_y: float, new_y: float, solid_only: bool = False) -> Platform | None:
+        cands = [p for p in self.platforms.values()
+                 if p.spans(x) and prev_y - 1 <= p.y <= new_y and (p.solid or not solid_only)]
         return min(cands, key=lambda p: p.y) if cands else None
 
     def _nearest_ground(self, x: float) -> Platform | None:

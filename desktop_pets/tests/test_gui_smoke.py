@@ -65,3 +65,38 @@ def test_app_starts_pauses_and_switches_pets(qapp, tmp_path):
     dlg._cancel()   # stellt den Stand beim Öffnen wieder her
     pa.quit()
     assert "needs" in (pa.settings.get("state") or {})
+
+
+def test_feeding_from_window_edge_goes_down_to_ground(qapp, tmp_path):
+    """Steht das Tier auf einem Fenster, muss es zum Napf am Boden herunter (nicht oben bleiben)."""
+    from desktop_pets.pet.physics import Platform
+
+    from desktop_pets.core.app import PetApp
+
+    pa = PetApp(qapp, settings_path=tmp_path / "settings.json")
+    pa.qapp.quit = lambda: None
+    pa.start()
+    pa.features.set_enabled("window_walking", False)   # Testfenster nicht durch echte Fenster ersetzen
+    pa.features.set_enabled("mouse_chase", False)
+    bed = pa.bed_window.bottom_center()
+    ground = pa.world.ground_at(bed.x())
+    # Ein „Fenster“ genau über Körbchen und Napf, das Tier steht oben drauf
+    edge = Platform("win:test:0", ground.left, ground.right, ground.y - 300)
+    pa.world.set_platforms([ground, edge])
+    pa.body.x = float(bed.x())
+    pa.body.place_on(edge)
+    pa.needs.hunger = 80
+    pa.feed()
+    for _ in range(200):          # ~6 s Spielzeit
+        spin(30)
+        if pa.body.support == ground.id:
+            break
+    assert pa.body.support == ground.id, f"Tier steht noch auf {pa.body.support}"
+    # … und dann unten zum Napf laufen und fressen (Napf wird danach leer)
+    for _ in range(400):
+        spin(30)
+        if pa.bowl_window._overlay is None:
+            break
+    assert pa.bowl_window._overlay is None, "Tier hat nicht gefressen"
+    assert pa.body.support == ground.id
+    pa.quit()
