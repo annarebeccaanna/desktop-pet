@@ -1,0 +1,87 @@
+{
+  "id": "dog",
+  "name": "Hund",
+  "order": 2,
+  "default_name": "Bello",
+  "sprite_size": [
+    16,
+    16
+  ],
+  "scale": 2,
+  "food": "Knochen",
+  "bed_name": "Hundekissen",
+  "palette": {
+    "primary": "#C68642",
+    "primary_dark": "#6B3E1E",
+    "secondary": "#FFFFFF"
+  },
+  "sounds": {
+    "happy": "pant.wav",
+    "angry": "growl.wav",
+    "call": "woof.wav",
+    "eat": "munch.wav"
+  },
+  "personality": {
+    "playfulness": 0.85,
+    "laziness": 0.35
+  },
+  "prompt": "Du bist ein begeisterter, treuer Hund. Antworte kurz und freudig, gern mit Wuff.",
+  "animations": {
+    "idle": {
+      "row": 0,
+      "frames": 4,
+      "fps": 4
+    },
+    "walk": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10
+    },
+    "run": {
+      "row": 2,
+      "frames": 6,
+      "fps": 14
+    },
+    "sit": {
+      "row": 3,
+      "frames": 2,
+      "fps": 2
+    },
+    "sleep": {
+      "row": 4,
+      "frames": 2,
+      "fps": 1
+    },
+    "groom": {
+      "row": 5,
+      "frames": 6,
+      "fps": 6
+    },
+    "jump": {
+      "row": 6,
+      "frames": 4,
+      "fps": 10,
+      "loop": false
+    },
+    "fall": {
+      "row": 7,
+      "frames": 2,
+      "fps": 8
+    },
+    "happy": {
+      "row": 8,
+      "frames": 4,
+      "fps": 8
+    },
+    "angry": {
+      "row": 9,
+      "frames": 4,
+      "fps": 10
+    },
+    "eat": {
+      "row": 10,
+      "frames": 4,
+      "fps": 6
+    }
+  }
+}
