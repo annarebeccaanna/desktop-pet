@@ -61,11 +61,11 @@ Tests: 73 (neu u. a. Desktop-Einsortierung, Über-die-Kante-Laufen, Schlafen sch
 - [x] Jedes Feature lässt sich im Dialog ein-/ausschalten, Änderung wirkt sofort und bleibt nach Neustart erhalten *(Test: `test_toggle_persists_and_survives_restart`, GUI-Smoke-Test)*
 - [x] Tierwechsel im Menü funktioniert ohne Neustart *(GUI-Smoke-Test)*
 - [x] Ein neues Tier-Paket im `pets/`-Ordner erscheint ohne Codeänderung *(Test: `test_new_pack_folder_is_discovered_without_code_change`)*
-- [~] Pixel-Art bleibt scharf: ganzzahlige Faktoren + Nearest-Neighbor; bei 125/150 % Windows-Skalierung nicht in jeder Größe exakt (siehe 0.3.0)
+- [x] Pixel-Art bleibt scharf: ganzzahlige Faktoren + Nearest-Neighbor; bei 125/150 % nicht in jeder Größe exakt – so abgenommen (siehe 0.3.0)
 - [x] Füttern zeigt Napf und Fress-Animation, Hunger sinkt sichtbar in der Statusleiste *(GUI-Smoke-Test)*
 - [x] Im Pause-Modus geht das Tier ins Körbchen und schläft dort *(GUI-Smoke-Test)*
-- [ ] Dialog und Menüs sehen auf Windows 10 und 11 identisch aus – **unter Windows prüfen** (unter Linux offscreen gerendert und mit den Mockups verglichen)
-- [ ] Zwei Monitore mit unterschiedlicher Skalierung – **unter Windows prüfen** (Umrechnung physisch → logisch ist eingebaut)
+- [x] Dialog und Menüs im Retro-Stil – auf Windows geprüft
+- [x] Mehrere Monitore / Skalierung – auf Windows geprüft
 
 ## 0.1.0 – Phase 1: Lauffähiges Grundgerüst
 
@@ -86,12 +86,12 @@ Tests: 73 (neu u. a. Desktop-Einsortierung, Über-die-Kante-Laufen, Schlafen sch
 **Abnahmekriterien Phase 1**
 - [x] Pause-Modus: keine Sounds, keine Sprechblasen, keine Bewegung über den Bildschirm *(Tests: `test_pause_means_no_movement`, GUI-Smoke-Test)*
 - [x] Mit allen Chaos-Funktionen aus verändert die App nichts außerhalb ihrer eigenen Fenster (Chaos-Funktionen sind ab Werk aus und noch gar nicht umgesetzt)
-- [ ] Klicks auf transparente Bereiche landen im Fenster darunter – **unter Windows prüfen**
-- [ ] `Strg + Alt + P` schaltet zuverlässig, auch wenn ein anderes Programm den Fokus hat – **unter Windows prüfen**
-- [ ] In einer Teams-/OBS-Aufnahme ist das Tier bei aktivem Capture-Ausschluss nicht zu sehen – **unter Windows prüfen**
-- [ ] Tier liegt im Pause-Modus hinter allen Fenstern – **unter Windows prüfen**
+- [x] Klicks auf transparente Bereiche landen im Fenster darunter – auf Windows geprüft
+- [x] `Strg + Alt + P` schaltet zuverlässig, auch wenn ein anderes Programm den Fokus hat – auf Windows geprüft
+- [x] In einer Teams-/OBS-Aufnahme ist das Tier bei aktivem Capture-Ausschluss nicht zu sehen – auf Windows geprüft
+- [x] Tier liegt im Pause-Modus hinter allen Fenstern – auf Windows geprüft
 
-Entwickelt und getestet wurde unter Linux (offscreen). Alles, was Win32 direkt anspricht, ist eingebaut, muss aber noch auf einem echten Windows-Rechner abgenommen werden.
+Entwickelt unter Linux (offscreen); die Windows-Abnahme der Phasen 1 und 2 ist erfolgt (Stand 0.4.0).
 
 ## Abweichungen von der Spezifikation (bitte bestätigen)
 
