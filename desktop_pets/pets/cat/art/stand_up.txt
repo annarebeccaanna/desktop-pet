@@ -1,0 +1,37 @@
+# Katze – Übergang: aufstehen (Sitzen → Laufen)
+@durations 90 90
+@loop false
+
+................
+................
+..K..........K..
+..KK........KK..
+..KPK......KPK..
+..KPPKKKKKKPPK..
+.KOOOOOOOOOOOOK.
+.KOOKOOOOOOKOOK.
+.KOOKOOOOOOKOOK.
+KOCOOOOPPOOOOCOK
+.KOOOOOKKOOOOOK.
+..KKOOOOOOOOKK..
+..KOCCCCCCCCOK..
+.KOOCCCCCCCCOOK.
+.KOOCCCCCCCCOOK.
+.KOKOCCCCCCOKOK.
+
+................
+................
+................
+................
+................
+..........K...K.
+.K.......KPK.KPK
+KOK......KOOOOOK
+KOK......KOOOKOK
+.KOKKKKKKOOOOOPK
+..KOOOOOOOOOCCK.
+..KODOODOOOCCK..
+..KOOOOOOOOOCK..
+..KKKKKKKKKKKK..
+..KOOK....KOOK..
+..KKKK....KKKK..

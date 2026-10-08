@@ -39,7 +39,8 @@ if TYPE_CHECKING:  # pragma: no cover
 class PetPreview(QWidget):
     """Weiße „Leinwand“ mit animierter Tiervorschau (Klick wechselt die Animation)."""
 
-    CYCLE = ["idle", "walk", "happy", "groom", "sleep", "eat", "angry"]
+    CYCLE = ["idle", "walk", "run", "special", "happy", "fidget", "groom", "jump", "sleep", "eat", "angry"]
+    TICK_MS = 40
 
     def __init__(self, parent: QWidget | None = None, checker: bool = True, background: str | None = None) -> None:
         super().__init__(parent)
@@ -49,7 +50,8 @@ class PetPreview(QWidget):
         self.setToolTip("Klicken: andere Animation zeigen")
         self._sprites: SpriteSet | None = None
         self._anim = "idle"
-        self._frame = 0
+        self._animator = None
+        self._hold = 0.0          # kurze Pause, bevor eine Einmal-Animation wiederholt wird
         self._zoom = 8
         self._flip = False
         self._checker = checker
@@ -66,15 +68,29 @@ class PetPreview(QWidget):
         self._restart()
 
     def _restart(self) -> None:
-        self._frame = 0
+        from ..pet.animator import Animator
+
         if self._sprites is not None:
-            fps = self._sprites.pack.animations.get(self._anim, self._sprites.pack.animations["idle"]).fps
-            self._timer.start(int(1000 / max(fps, 0.5)))
+            self._animator = Animator(self._sprites.pack.animations)
+            self._anim = self._animator.play(self._anim, restart=True)
+            self._hold = 0.0
+            self._timer.start(self.TICK_MS)
         self.update()
 
     def _advance(self) -> None:
-        self._frame += 1
-        self.update()
+        a = self._animator
+        if a is None:
+            return
+        if a.finished:
+            # Einmal-Animationen (Sprung, Signatur …) nach kurzer Pause wiederholen
+            self._hold += self.TICK_MS / 1000
+            if self._hold >= 0.8:
+                self._hold = 0.0
+                a.play(self._anim, restart=True)
+                self.update()
+            return
+        if a.update(self.TICK_MS / 1000):
+            self.update()
 
     def mousePressEvent(self, e: QMouseEvent) -> None:  # noqa: N802
         if e.button() == Qt.LeftButton:
@@ -96,7 +112,7 @@ class PetPreview(QWidget):
                         p.fillRect(x, y, s, s, c)
         if self._sprites is None:
             return
-        frame = self._sprites.frame(self._anim, self._frame)
+        frame = self._sprites.frame(self._anim, self._animator.frame if self._animator else 0)
         pm = frame.pixmap(-1 if self._flip else 1)
         fw, fh = self._sprites.pack.sprite_size
         # Vorschau ganzzahlig vergrößert, passend zur Leinwand

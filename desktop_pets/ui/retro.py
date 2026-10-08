@@ -11,7 +11,7 @@ from __future__ import annotations
 from PySide6.QtCore import QPoint, QRect, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QLinearGradient, QMouseEvent, QPainter, QPainterPath, QPen, QPixmap, QRegion
 from PySide6.QtWidgets import (
-    QAbstractButton, QFrame, QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget,
+    QAbstractButton, QFrame, QHBoxLayout, QLabel, QMenuBar, QSizePolicy, QVBoxLayout, QWidget,
 )
 
 from ..win import dwm
@@ -256,8 +256,6 @@ class RetroWindow(QWidget):
 
     def add_menu_bar(self) -> "QMenuBar":
         """Klassische Menüleiste unter der Titelleiste (Datei, Bearbeiten, Ansicht, ? …)."""
-        from PySide6.QtWidgets import QMenuBar
-
         bar = QMenuBar(self)
         bar.setNativeMenuBar(False)
         self.layout().insertWidget(1, bar)

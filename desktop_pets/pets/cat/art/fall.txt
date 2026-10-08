@@ -1,0 +1,36 @@
+# Katze – Fällt mit gespreizten Beinen
+@durations 160 160
+
+................
+................
+................
+................
+..........K...K.
+.K.......KPK.KPK
+KOK......KOOOOOK
+KOK......KOOOKOK
+.KOKKKKKKOOOOOPK
+..KOOOOOOOOOCCK.
+..KODOODOOOCCK..
+..KOOOOOOOOOCK..
+..KKKKKKKKKKKK..
+.KOK.......KOK..
+KOK.........KOK.
+KK...........KK.
+
+................
+................
+................
+................
+..........K...K.
+.K.......KPK.KPK
+KOK......KOOOOOK
+KOK......KOOOKOK
+.KOKKKKKKOOOOOPK
+..KOOOOOOOOOCCK.
+..KODOODOOOCCK..
+..KOOOOOOOOOCK..
+..KKKKKKKKKKKK..
+...KOKK.KOKK....
+....KKK.KKK.....
+................

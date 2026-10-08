@@ -1,0 +1,19 @@
+# Hund – Hundekissen
+@color B #3D6FC4
+@color b #28509A
+@color R #8FB4EA
+@color K #000000
+
+........................
+........................
+........................
+........................
+...KKKKKKKKKKKKKKKKKK...
+..KBBBBBBBBBBBBBBBBBBK..
+.KBbbbbbbbbbbbbbbbbbbBK.
+KBbRRRRRRRRRRRRRRRRRRbBK
+KBbRRRRRRRRRRRRRRRRRRbBK
+KBBbbbbbbbbbbbbbbbbbbBBK
+KBBBBBBBBBBBBBBBBBBBBBBK
+.KBBBBBBBBBBBBBBBBBBBBK.
+..KKKKKKKKKKKKKKKKKKKK..

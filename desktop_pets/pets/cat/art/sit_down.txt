@@ -1,0 +1,37 @@
+# Katze – Übergang: von der Seite hinsetzen (Laufen → Sitzen)
+@durations 90 110
+@loop false
+
+................
+................
+................
+................
+................
+..........K...K.
+.K.......KPK.KPK
+KOK......KOOOOOK
+KOK......KOOOKOK
+.KOKKKKKKOOOOOPK
+..KOOOOOOOOOCCK.
+..KODOODOOOCCK..
+..KOOOOOOOOOCK..
+..KKKKKKKKKKKK..
+..KOOK....KOOK..
+..KKKK....KKKK..
+
+................
+................
+..K..........K..
+..KK........KK..
+..KPK......KPK..
+..KPPKKKKKKPPK..
+.KOOOOOOOOOOOOK.
+.KOOKOOOOOOKOOK.
+.KOOKOOOOOOKOOK.
+KOCOOOOPPOOOOCOK
+.KOOOOOKKOOOOOK.
+..KKOOOOOOOOKK..
+..KOCCCCCCCCOK..
+.KOOCCCCCCCCOOK.
+.KOOCCCCCCCCOOK.
+.KOKOCCCCCCOKOK.

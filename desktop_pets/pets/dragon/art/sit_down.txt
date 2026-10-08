@@ -1,0 +1,37 @@
+# Drache – Übergang: von der Seite hinsetzen (Laufen → Sitzen)
+@durations 90 110
+@loop false
+
+................
+................
+................
+................
+............P...
+...PP.......KP..
+..KPPK.....KOOK.
+PKPPPPK...KOOOOK
+KOKPPPKK..KOAKOK
+.KOKPKOOKKOOOOOK
+..KOOOOOOOOCCKK.
+..KOOOOOOOCCCK..
+..KOOOOOOOOCCK..
+..KKKKKKKKKKKK..
+..KOOK....KOOK..
+..KKKK....KKKK..
+
+................
+...P........P...
+...KP......PK...
+....KKKKKKKK....
+...KOOOOOOOOK...
+..KOOOOOOOOOOK..
+..KOAKOOOOKAOK..
+..KOOKOOOOKOOK..
+..KOOOOOOOOOOK..
+..KOOOOKKOOOOK..
+...KKOOOOOOKK...
+KPK.KOOOOOOK.KPK
+KPPKOCCCCCCOKPPK
+KPPKOCCCCCCOKPPK
+.KPKOCCCCCCOKPK.
+..KOOOOCCOOOOK..

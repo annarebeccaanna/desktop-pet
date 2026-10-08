@@ -1,0 +1,13 @@
+# Farben für Drache. Zeichen  Farbe  [Rolle]
+# Rollen: primary/secondary = umfärbbar über die Paint-Palette, primary_dark folgt automatisch.
+.  transparent
+K  #000000    # Umriss
+O  #3A9A2E  primary    # Fell/Haut (Hauptfarbe, umfärbbar)
+D  #26701E  primary_dark    # dunkle Hauptfarbe (folgt beim Umfärben)
+C  #F5D547  secondary    # Bauch/Brust (Zweitfarbe, umfärbbar)
+P  #90D070    # Akzent
+A  #F5A623    # Akzent 2
+W  #FFFFFF    # Weiß
+T  #E0503A    # Zunge/Maul
+G  #8A8A8A    # Rauch dunkel
+g  #CFCFCF    # Rauch hell

@@ -26,6 +26,12 @@ class AnimationDef:
     frames: int
     fps: float
     loop: bool = True
+    durations: tuple[float, ...] | None = None   # Sekunden je Bild (überschreibt fps)
+
+    def frame_time(self, index: int) -> float:
+        if self.durations:
+            return max(0.01, self.durations[index % len(self.durations)])
+        return 1.0 / self.fps
 
 
 @dataclass
@@ -70,11 +76,18 @@ def _parse_animations(raw: Any) -> dict[str, AnimationDef]:
     out: dict[str, AnimationDef] = {}
     for name, spec in raw.items():
         try:
+            frames = max(1, int(spec.get("frames", 1)))
+            durations = spec.get("durations")
+            if durations is not None:
+                durations = tuple(max(1, float(ms)) / 1000.0 for ms in durations)
+                if len(durations) != frames:
+                    raise PackError(f"Animation {name!r}: {frames} Bilder, aber {len(durations)} Dauern")
             out[name] = AnimationDef(
                 row=int(spec["row"]),
-                frames=max(1, int(spec.get("frames", 1))),
+                frames=frames,
                 fps=max(0.1, float(spec.get("fps", 4))),
                 loop=bool(spec.get("loop", True)),
+                durations=durations,
             )
         except (KeyError, TypeError, ValueError) as exc:
             raise PackError(f"Animation {name!r} ungültig: {exc}") from exc

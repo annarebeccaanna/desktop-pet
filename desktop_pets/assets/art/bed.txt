@@ -1,0 +1,19 @@
+# Körbchen (Standard, falls ein Tier keins hat)
+@color B #C08040
+@color b #8A5A2B
+@color R #D94A4A
+@color K #000000
+
+........................
+........................
+........................
+........................
+........................
+.KKKKKKKKKKKKKKKKKKKKKK.
+KBBbBBbBBbBBbBBbBBbBBbBK
+KbRRRRRRRRRRRRRRRRRRRRbK
+KBRRRRRRRRRRRRRRRRRRRRBK
+KbBBbBBbBBbBBbBBbBBbBBbK
+KBbBBbBBbBBbBBbBBbBBbBBK
+.KbBBbBBbBBbBBbBBbBBbBK.
+..KKKKKKKKKKKKKKKKKKKK..

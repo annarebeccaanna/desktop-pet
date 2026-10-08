@@ -22,6 +22,7 @@ from PySide6.QtWidgets import QApplication
 from .. import APP_NAME
 from ..pet.animator import Animator
 from ..pet.brain import Brain, Perception, State
+from ..pet.choreo import Choreographer
 from ..pet.needs import Needs
 from ..pet.pack import PetPack, discover_packs
 from ..pet.physics import Body, World, jump_velocity
@@ -89,6 +90,7 @@ class PetApp(QObject):
         self.needs = Needs()
         self.brain = self._make_brain(self.pack)
         self.animator = Animator(self.pack.animations)
+        self.choreo = Choreographer(self.animator)
         self.sprites: SpriteSet | None = None
         self.facing = -1 if self.settings.get("pet.flip") else 1
 
@@ -224,6 +226,7 @@ class PetApp(QObject):
         new_brain.facing = self.brain.facing
         self.brain = new_brain
         self.animator = Animator(self.pack.animations)
+        self.choreo = Choreographer(self.animator)
         if self.in_bed:
             self.brain.send_to_sleep(1e9)
         self.refresh_sprites()
@@ -377,12 +380,12 @@ class PetApp(QObject):
                 self.body.support = None
                 self.body.vx, self.body.vy = jump_velocity(tx - self.body.x, ty - self.body.y)
             elif self.body.on_ground:
-                self.body.vx = intent.vx * self.scale_factor / 4.0
+                # Während Übergängen (hinsetzen, aufstehen, landen) steht das Tier kurz still
+                self.body.vx = 0.0 if self.choreo.blocking else intent.vx * self.scale_factor / 4.0
             self.world.step(self.body, dt)
 
         self.facing = intent.facing
-        self.animator.play(intent.animation)
-        self.animator.update(dt)
+        self.choreo.update(intent.animation, dt, extras=not self.dragging, quiet=paused)
         for event in self.brain.pop_events():
             if event == "hearts":
                 self.hearts(3)

@@ -1,0 +1,12 @@
+# Napf (Standard für alle Tiere)
+@color W #FFFFFF
+@color R #E0503A
+@color K #000000
+
+............
+............
+.KKKKKKKKKK.
+KWWWWWWWWWWK
+KRRRRRRRRRRK
+.KRRRRRRRRK.
+..KKKKKKKK..

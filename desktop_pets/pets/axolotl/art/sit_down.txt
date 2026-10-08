@@ -1,0 +1,37 @@
+# Axolotl – Übergang: von der Seite hinsetzen (Laufen → Sitzen)
+@durations 90 110
+@loop false
+
+................
+................
+................
+................
+................
+................
+.........A.A....
+........A.AKKKK.
+.......AAAKOOOOK
+.........KOOOKOK
+KKK...KKKOOOOOOK
+KOOKKKOOOOOOKKK.
+.KOOOOOOOOOOCK..
+..KOOOOOOOOCCK..
+..KKKKKKKKKKKK..
+..KOOK....KOOK..
+
+................
+................
+P.P..........P.P
+.PKKKKKKKKKKKKP.
+PPKOOOOOOOOOOKPP
+.KOOOOOOOOOOOOK.
+PKOOKOOOOOOKOOKP
+PKOOKOOOOOOKOOKP
+.KOOOOOOOOOOOOK.
+..KOOKKKKKKOOK..
+...KOOOOOOOOK...
+...KOOOCCOOOK...
+..KOOCCCCCCOOK..
+..KOOCCCCCCOOK..
+..KOOOCCCCOOOK..
+..KOKOOOOOOKOK..

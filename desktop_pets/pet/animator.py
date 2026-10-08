@@ -1,7 +1,8 @@
 """Spielt Animationen aus einem Sprite-Sheet ab (reine Zeitlogik, ohne Qt).
 
 Das Sheet hat eine Zeile pro Animation und eine Spalte pro Frame. Fehlt eine
-Animation, wird ``idle`` gespielt.
+Animation, wird ``idle`` gespielt. Jedes Bild kann eine eigene Dauer haben
+(z. B. lange Augen auf, kurz blinzeln).
 """
 
 from __future__ import annotations
@@ -43,13 +44,12 @@ class Animator:
     def update(self, dt: float) -> bool:
         """Schreitet um ``dt`` Sekunden fort. True, wenn sich der Frame geändert hat."""
         anim = self.current
-        if anim.frames <= 1 or self.finished:
+        if self.finished or (anim.frames <= 1 and anim.loop):
             return False
         self._elapsed += dt
-        step = 1.0 / anim.fps
         changed = False
-        while self._elapsed >= step:
-            self._elapsed -= step
+        while self._elapsed >= anim.frame_time(self.frame):
+            self._elapsed -= anim.frame_time(self.frame)
             if self.frame + 1 >= anim.frames:
                 if anim.loop:
                     self.frame = 0
@@ -64,4 +64,6 @@ class Animator:
 
     def suggested_interval_ms(self) -> int:
         """Wie oft neu gezeichnet werden muss (spart CPU im Schlaf)."""
-        return max(16, int(1000 / max(self.current.fps, 0.1)))
+        if self.finished:
+            return 250
+        return max(16, int(self.current.frame_time(self.frame) * 1000))

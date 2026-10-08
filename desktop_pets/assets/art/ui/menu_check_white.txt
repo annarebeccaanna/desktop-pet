@@ -1,0 +1,10 @@
+# Häkchen im Menü (markierte Zeile)
+@color K #FFFFFF
+
+.......
+......K
+.....KK
+K...KK.
+KK.KK..
+.KKK...
+..K....

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0 – Neue Animationen (Option B)
+
+- **Seitenansicht fürs Laufen, Rennen und Springen** bei allen vier Tieren – Spiegeln für links/rechts wirkt jetzt richtig. Sitzen, Fressen, Freuen, Putzen und Schlafen bleiben von vorn wie in den Mockups.
+- **Signatur-Bewegung je Tier** (`special`, auch beim Freuen): Katze Schwanzschwingen & Pfote lecken, Hund Schwanzwedeln & Hecheln, Drache Flügelschlag & Rauchwölkchen, Axolotl Kiemenwackeln & Schweben.
+- **Unterschiedlich lange Bilder:** z. B. lange Augen auf, kurz blinzeln (`@durations` / `durations` in `pet.json`).
+- **Übergänge** statt harter Wechsel (`pet/choreo.py`): hinsetzen, aufstehen, Landung mit Stauchen, Aufwachen mit Strecken und Gähnen. Währenddessen steht das Tier kurz still.
+- **Ab und zu Zwischenbilder** beim Stehen/Sitzen: Ohrzucken & Kopf schief (`fidget`), Gähnen, Signatur-Bewegung – im Pause-Modus nur die unauffälligen.
+- **Sprites als Textdateien** (`pets/<id>/art/*.txt`, `palette.txt`), direkt im Editor bearbeitbar; `tools/make_sprites.py` ist jetzt ein schlanker Konverter. Auch Körbchen, Futter, Napf, Herz, Zzz und die UI-Häkchen liegen als Text vor.
+- 18 Animationen je Tier (vorher 11). Hund: Zweitfarbe minimal vom Augen-Weiß getrennt, damit Umfärben die Augen nicht mitfärbt.
+
+Tests: 93 (neu: Bilddauern, Übergangsketten, Zwischenbilder, Textformat, `sprites.png` passt zu den Textdateien).
+
 ## 0.3.1 – Menüleiste im Einstellungsfenster
 
 - Einstellungen haben jetzt eine klassische XP-Menüleiste: **Datei** (Übernehmen `Strg+S`, Änderungen verwerfen, Schließen), **Tier** (**Tier wählen ▸** mit allen Tier-Paketen, Größe ▸, Spiegeln, Originalfarben, Tier umbenennen …), **Ansicht** (Tabs), **?** (Über). Menü, Tierliste und Vorschau bleiben synchron.

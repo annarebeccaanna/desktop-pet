@@ -1,0 +1,36 @@
+# Drache – Fällt mit gespreizten Beinen
+@durations 160 160
+
+................
+................
+................
+............P...
+...PP.......KP..
+..KPPK.....KOOK.
+PKPPPPK...KOOOOK
+KOKPPPKK..KOAKOK
+.KOKPKOOKKOOOOOK
+..KOOOOOOOOCCKK.
+..KOOOOOOOCCCK..
+..KOOOOOOOOCCK..
+..KKKKKKKKKKKK..
+.KOK.......KOK..
+KOK.........KOK.
+KK...........KK.
+
+................
+................
+................
+............P...
+...PP.......KP..
+..KPPK.....KOOK.
+PKPPPPK...KOOOOK
+KOKPPPKK..KOAKOK
+.KOKPKOOKKOOOOOK
+..KOOOOOOOOCCKK.
+..KOOOOOOOCCCK..
+..KOOOOOOOOCCK..
+..KKKKKKKKKKKK..
+...KOKK.KOKK....
+....KKK.KKK.....
+................

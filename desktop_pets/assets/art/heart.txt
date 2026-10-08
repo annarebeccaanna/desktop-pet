@@ -1,0 +1,11 @@
+# Herzchen (Streicheln, Freude)
+@color R #E2563A
+@color W #FFFFFF
+@color K #000000
+
+.KK.KK.
+KRRKRRK
+KRWRRRK
+.KRRRK.
+..KRK..
+...K...

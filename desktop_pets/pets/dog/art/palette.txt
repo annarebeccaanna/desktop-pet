@@ -1,0 +1,13 @@
+# Farben für Hund. Zeichen  Farbe  [Rolle]
+# Rollen: primary/secondary = umfärbbar über die Paint-Palette, primary_dark folgt automatisch.
+.  transparent
+K  #000000    # Umriss
+O  #C68642  primary    # Fell/Haut (Hauptfarbe, umfärbbar)
+D  #6B3E1E  primary_dark    # dunkle Hauptfarbe (folgt beim Umfärben)
+C  #FFFBF2  secondary    # Bauch/Brust (Zweitfarbe, umfärbbar)
+P  #E0503A    # Akzent
+A  #6B3E1E    # Akzent 2
+W  #FFFFFF    # Weiß
+T  #E0503A    # Zunge/Maul
+G  #8A8A8A    # Rauch dunkel
+g  #CFCFCF    # Rauch hell

@@ -1,0 +1,10 @@
+# Häkchen im Menü
+@color K #000000
+
+.......
+......K
+.....KK
+K...KK.
+KK.KK..
+.KKK...
+..K....

@@ -1,0 +1,13 @@
+# Farben für Katze. Zeichen  Farbe  [Rolle]
+# Rollen: primary/secondary = umfärbbar über die Paint-Palette, primary_dark folgt automatisch.
+.  transparent
+K  #000000    # Umriss
+O  #E89C3C  primary    # Fell/Haut (Hauptfarbe, umfärbbar)
+D  #B8732A  primary_dark    # dunkle Hauptfarbe (folgt beim Umfärben)
+C  #FDF0D2  secondary    # Bauch/Brust (Zweitfarbe, umfärbbar)
+P  #F08CB4    # Akzent
+A  #F08CB4    # Akzent 2
+W  #FFFFFF    # Weiß
+T  #E0503A    # Zunge/Maul
+G  #8A8A8A    # Rauch dunkel
+g  #CFCFCF    # Rauch hell

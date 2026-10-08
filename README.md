@@ -62,7 +62,28 @@ pets/hamster/
 └── food.png      # optional: Futter
 ```
 
-Ablegen in `desktop_pets/pets/` oder in `%APPDATA%\DesktopPets\pets\`. Fehlt eine Animation, spielt das Tier `idle`. Die vier Start-Tiere erzeugt `python tools/make_sprites.py` (Pillow nötig), die 8-Bit-Sounds `python tools/make_sounds.py`.
+Ablegen in `desktop_pets/pets/` oder in `%APPDATA%\DesktopPets\pets\`. Fehlt eine Animation, spielt das Tier `idle`.
+
+### Tiere zeichnen und ändern (Text-Sprites)
+
+Die Pixel-Art der Start-Tiere liegt als Textdateien in `pets/<id>/art/` – eine Datei je Animation, ein Zeichen je Pixel. Du kannst sie direkt in VS Code bearbeiten:
+
+```
+# Katze – Laufen – Seitenansicht, Blick nach rechts (nach links wird gespiegelt)
+@durations 130 130 130 130        ← Dauer je Bild in ms
+
+................
+..........K...K.
+.K.......KPK.KPK                  ← K = Umriss, O = Fell, P = Akzent …
+…
+```
+
+* `palette.txt` legt fest, welches Zeichen welche Farbe ist (`primary`/`secondary` lassen sich in der App umfärben).
+* Bilder in einer Datei sind durch Leerzeilen getrennt; `@loop false` für Einmal-Animationen.
+* Seitenansichten (laufen, rennen, springen) blicken nach rechts, Sitzen/Fressen/Freuen sind von vorn.
+* Danach `python tools/make_sprites.py` ausführen (Pillow nötig) – das erzeugt `sprites.png`, `icon.png` usw. und aktualisiert die Animationsliste in `pet.json`. Ein Test prüft, dass beides zusammenpasst.
+
+Animationen je Tier: `idle`, `walk`, `run`, `sit`, `sleep`, `groom`, `jump`, `fall`, `happy`, `angry`, `eat` · Übergänge `sit_down`, `stand_up`, `land`, `wake` · ab und zu `yawn`, `fidget`, `special` (Signatur: Katze Schwanz, Hund Wedeln & Hecheln, Drache Flügel & Rauch, Axolotl Kiemen & Schweben). Die 8-Bit-Sounds erzeugt `python tools/make_sounds.py`.
 
 ## Daten & Datenschutz
 
@@ -76,16 +97,17 @@ Ablegen in `desktop_pets/pets/` oder in `%APPDATA%\DesktopPets\pets\`. Fehlt ein
 desktop_pets/
 ├── main.py            Einstieg
 ├── core/              app (Steuerung, Takt), platforms, settings, events, modes, sound, paths, log
-├── pet/               pet_window, animator, brain, needs, physics, pack, sprites, recolor
+├── pet/               pet_window, animator, choreo (Übergänge), brain, needs, physics, pack,
+│                      sprites, textsprites, recolor
 ├── features/          eine Datei je Funktion – mit ihrer ganzen Logik, ihren Fenstern und Menüeinträgen
 │                      (base.Feature: behaviours, contribute, on_brain_event, menu_actions …)
 ├── win/               capture, hotkeys, idle, windows_enum, zorder, dwm, autostart
 ├── ui/                tray, settings_dialog, speech_bubble, retro (Titelleiste usw.), theme, about
 ├── themes/            retro_xp.qss + retro_xp.json
 ├── assets/            Pixelschrift (Silkscreen, OFL), Sounds, UI-Grafiken
-├── pets/              cat, dog, dragon, axolotl
+├── pets/              cat, dog, dragon, axolotl (je art/*.txt = Pixel-Art als Text)
 └── tests/
-tools/                 make_sprites.py, make_sounds.py
+tools/                 make_sprites.py (Text-Sprites → PNG), make_sounds.py
 ```
 
 Die vollständige Spezifikation steht in [`SPEC.md`](SPEC.md), der Stand der Umsetzung in [`CHANGELOG.md`](CHANGELOG.md).

@@ -1,0 +1,12 @@
+# Hund – Futter (Knochen)
+@color W #FFF6E0
+@color K #000000
+
+........
+.KK..KK.
+KWWKKWWK
+.KWWWWK.
+KWWKKWWK
+.KK..KK.
+........
+........

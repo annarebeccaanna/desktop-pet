@@ -1,0 +1,7 @@
+# Zzz (Schlafen)
+@color K #1A3A8A
+
+KKKK
+..K.
+.K..
+KKKK

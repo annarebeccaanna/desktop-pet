@@ -1,0 +1,14 @@
+# Drache – Futter (Paprika)
+@color R #E0503A
+@color G #3A9A2E
+@color W #FFFFFF
+@color K #000000
+
+....K...
+...KG...
+.KKKKKK.
+KRRRRRWK
+KRRRRRRK
+KRRRRRRK
+.KRRRRK.
+..KKKK..
