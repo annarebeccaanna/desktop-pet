@@ -94,6 +94,7 @@ class SpeechBubble(QWidget):
             btn.setFocusPolicy(Qt.NoFocus)
             btn.clicked.connect(lambda _=False, c=cb: (self.dismiss(), c()))
             self.buttons.addWidget(btn)
+            btn.show()          # sofort sichtbar, damit adjustSize() die volle Breite kennt
         if buttons:
             self.buttons.addStretch(1)
         self.adjustSize()

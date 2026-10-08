@@ -27,6 +27,7 @@ Das Tier erscheint unten rechts über der Taskleiste, das Tray-Icon zeigt seinen
 |---|---|
 | Pause-Modus umschalten | `Strg + Alt + P` |
 | Tier ein-/ausblenden | `Strg + Alt + H` |
+| Pomodoro starten/stoppen | `Strg + Alt + T` (wenn Pomodoro eingeschaltet ist) |
 
 Alle Tastenkürzel lassen sich im Einstellungsdialog ändern.
 

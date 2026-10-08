@@ -29,7 +29,7 @@ from ..pet.physics import Body, World, jump_velocity
 from ..win import capture, hotkeys as hk
 from ..win.idle import IdleMonitor
 from . import paths, platforms
-from .events import MODE_CHANGED, NOTIFY, PET_CHANGED, SETTINGS_CHANGED, EventBus
+from .events import FEATURE_TOGGLED, MODE_CHANGED, NOTIFY, PET_CHANGED, SETTINGS_CHANGED, EventBus
 from .log import get_logger
 from .modes import Mode, ModeManager
 from .settings import Settings
@@ -123,6 +123,8 @@ class PetApp(QObject):
         self.bus.subscribe(MODE_CHANGED, self._on_mode_changed)
         self.bus.subscribe(NOTIFY, lambda title, text: self.say(title, text, 9))
         self.bus.subscribe(SETTINGS_CHANGED, self._on_settings_changed)
+        self.bus.subscribe(FEATURE_TOGGLED, lambda feature_id, enabled: self.register_hotkeys()
+                           if self.timer.isActive() else None)
         qapp.screenAdded.connect(self._on_screen_added)
         qapp.screenRemoved.connect(lambda *_: self._on_screens_changed())
         for screen in qapp.screens():
@@ -537,7 +539,14 @@ class PetApp(QObject):
 
     def register_hotkeys(self) -> None:
         failed = []
-        for name, action in (("toggle_pause", self.toggle_pause), ("toggle_visible", self.toggle_visible)):
+        wanted = [("toggle_pause", self.toggle_pause), ("toggle_visible", self.toggle_visible)]
+        for f in self.features.features.values():
+            if f.enabled:
+                wanted += f.hotkeys()
+        for name in list(self.hotkeys._names):          # abgeschaltete Funktionen freigeben
+            if name not in dict(wanted):
+                self.hotkeys.unregister(name)
+        for name, action in wanted:
             combo = self.settings.get(f"hotkeys.{name}")
             if combo and not self.hotkeys.register(name, combo, action) and self.hotkeys.available:
                 failed.append(combo)

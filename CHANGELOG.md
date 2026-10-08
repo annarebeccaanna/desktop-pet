@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.7.0 – Phase 3: Pomodoro
+
+- **Pomodoro** (ab Werk aus, unter Funktionen → Nützlich im Arbeitsalltag): Standard **55 Minuten Arbeit + 5 Minuten Pause**, beides über das Zahnrad einstellbar.
+- **Start/Stopp:** Tray-Menü, Rechtsklick aufs Tier oder `Strg + Alt + T` (änderbar unter Pause & Freigabe). Die Menüs zeigen immer die Restzeit, z. B. „Pomodoro stoppen (25:00)“.
+- **Pixelzähler:** kleiner Retro-Zähler mit Tomate, Restzeit in Pixelschrift und grünem Block-Fortschrittsbalken – anfangs unten rechts in der Ecke, mit der Maus wegziehbar (Position wird gemerkt). Abschaltbar über das Zahnrad oder per Rechtsklick „Zähler ausblenden“; dann steht die Zeit nur im Menü.
+- **Arbeitszeit vorbei:** „Pling“ und Sprechblase „Pomodoro geschafft!“ mit **Pause starten** / **Später** (erinnert nach 5 Minuten erneut).
+- **Pause:** Das Tier läuft/fliegt/schwimmt mitten auf den Desktop und schläft dort.
+- **Pause vorbei:** Das Tier steht auf (strecken, gähnen) und ruft per Sprechblase zurück an die Arbeit – **Neue Runde starten** startet die nächste Runde; automatisch geht nichts weiter.
+- **Pause-Modus:** Die Zeit läuft weiter, der Zähler ist ausgeblendet, die Meldung kommt gesammelt danach.
+- Funktionen können eigene Tastenkürzel mitbringen (`hotkeys()`), abgeschaltete geben ihr Kürzel frei.
+- **Behoben:** Knöpfe in Sprechblasen wurden beim ersten Anzeigen abgeschnitten („…use start…“) – betraf auch die Hunger-Blase.
+
+Tests: 129 (neu: Zeitlogik, kompletter Ablauf mit dem Tier, Einstellungen, Zähler verschieben/ausblenden, Pause-Modus, „Später“, Hotkey, Knopfbreite).
+
 ## 0.6.0 – Pause automatisch bei Bildschirmfreigabe (experimentell)
 
 - Neues Häkchen unter **Pause & Freigabe**: „Pause automatisch starten, wenn eine Freigabe erkannt wird“ (ab Werk aus).

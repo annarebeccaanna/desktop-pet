@@ -1,0 +1,16 @@
+# Pomodoro-Tomate (Zähler)
+@color K #000000
+@color R #E2563A
+@color r #B8361E
+@color W #FFFFFF
+@color G #3C9A2E
+
+....GG....
+..KGKKGK..
+.KRRGGRRK.
+KRWRRRRRRK
+KRWRRRRRrK
+KRRRRRRRrK
+KRRRRRRrrK
+.KRRRRrrK.
+..KKKKKK..

@@ -6,7 +6,6 @@ from __future__ import annotations
 from .base import planned
 
 # Nützlich im Arbeitsalltag – Phase 3
-planned("pomodoro", "Pomodoro", "25 / 5 Minuten, Tier legt sich zur Pause hin", "work", "später", "Phase 3", 10)
 planned("reminders", "Erinnerungen", "Trinken, Aufstehen, Lüften", "work", "später", "Phase 3", 20)
 planned("calendar_alerts", "Kalender", "Miaut vor Terminen (Outlook oder ICS)", "work", "später", "Phase 3", 30)
 planned("event_webhook", "Build & Tests", "Lokaler Webhook: Freudensprung oder Fauchen", "work", "stumm", "Phase 3", 40)

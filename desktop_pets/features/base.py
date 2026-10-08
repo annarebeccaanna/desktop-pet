@@ -10,6 +10,7 @@ Eine Funktion bringt alles in ihrer eigenen Datei mit – über diese Andockpunk
 * ``contribute(p)``     Wahrnehmung ergänzen (z. B. erreichbare Fensterkanten)
 * ``on_brain_event(e)`` auf Ereignisse reagieren ("petted", "arrived:feed", …)
 * ``menu_actions(w)``   Einträge im Tray- ("tray") oder Tier-Menü ("pet")
+* ``hotkeys()``         globale Tastenkürzel der Funktion (z. B. Pomodoro: ``Strg + Alt + T``)
 * ``on_sprites_changed()`` / ``on_settings_changed(key, value)`` / ``on_mode_changed(mode)``
   / ``on_visibility_changed(visible)``
 
@@ -110,6 +111,10 @@ class Feature:
 
     def on_visibility_changed(self, visible: bool) -> None:
         """Optional: Tier wurde ein- oder ausgeblendet (Hotkey, Vollbild …)."""
+
+    def hotkeys(self) -> list:
+        """Optional: [(Name, Aktion)] – Tastenkürzel aus ``hotkeys.<Name>`` in den Einstellungen."""
+        return []
 
     # Hilfen -----------------------------------------------------------------
     def option(self, key: str) -> Any:
