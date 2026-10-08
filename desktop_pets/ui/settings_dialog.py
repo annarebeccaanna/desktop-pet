@@ -318,6 +318,7 @@ class SettingsDialog(RetroWindow):
         self._snapshot = self.settings.snapshot()
         self._building = False
         self._feature_boxes: dict[str, QCheckBox] = {}
+        self._build_menu_bar()
 
         lay = QVBoxLayout(self.body)
         lay.setContentsMargins(10, 10, 10, 8)
@@ -351,8 +352,111 @@ class SettingsDialog(RetroWindow):
         self._status_timer.start(2000)
         self.app.bus.subscribe("mode_changed", self._on_mode_changed)
         self.app.bus.subscribe("feature_toggled", self._on_feature_toggled)
-        self.resize(760, 640)
+        self.resize(760, 664)
         self._refresh_all()
+
+    # ---------- Menüleiste ----------
+    def _build_menu_bar(self) -> None:
+        """Datei | Tier | Ansicht | ? – wie in XP-Programmen. „Tier wählen“ steckt im Menü Tier."""
+        bar = self.add_menu_bar()
+
+        m_file = bar.addMenu("&Datei")
+        m_file.addAction("Übernehmen\tStrg+S", self._apply)
+        m_file.addAction("Änderungen verwerfen", self._revert)
+        m_file.addSeparator()
+        m_file.addAction("Schließen", self.close)
+
+        self.menu_pet = bar.addMenu("&Tier")
+        self.menu_pet.aboutToShow.connect(self._fill_pet_menu)
+        self._fill_pet_menu()
+
+        m_view = bar.addMenu("&Ansicht")
+        m_view.aboutToShow.connect(lambda: self._fill_view_menu(m_view))
+
+        m_help = bar.addMenu("&?")
+        m_help.addAction("Über Desktop Pets", self.app.open_about)
+
+        from PySide6.QtGui import QKeySequence, QShortcut
+
+        QShortcut(QKeySequence("Ctrl+S"), self, activated=self._apply)
+
+    def _fill_pet_menu(self) -> None:
+        from PySide6.QtGui import QAction, QActionGroup
+
+        app = self.app
+        m = self.menu_pet
+        m.clear()
+        choose = m.addMenu("Tier wählen")
+        group = QActionGroup(choose)
+        for pack in app.packs.values():
+            act = QAction(QIcon(app.icon_pixmap(16, pack.id)), pack.name, choose)
+            act.setCheckable(True)
+            act.setChecked(pack.id == app.pack.id)
+            if pack.id == app.pack.id:   # Haken wird vom Icon verdeckt – darum zusätzlich fett
+                font = act.font()
+                font.setBold(True)
+                act.setFont(font)
+            act.triggered.connect(lambda _=False, pid=pack.id: self.select_pet(pid))
+            group.addAction(act)
+            choose.addAction(act)
+        size_menu = m.addMenu("Größe")
+        size_group = QActionGroup(size_menu)
+        current = int(self.settings.get("pet.size", 2) or 2)
+        for n in (1, 2, 3):
+            act = QAction(f"{n}×", size_menu)
+            act.setCheckable(True)
+            act.setChecked(n == current)
+            act.triggered.connect(lambda _=False, size=n: self._set_size(size))
+            size_group.addAction(act)
+            size_menu.addAction(act)
+        m.addAction("Spiegeln", self._on_flip)
+        reset = m.addAction("Originalfarben", self._on_reset_colors)
+        reset.setEnabled(app.features.is_enabled("recolor"))
+        m.addSeparator()
+        m.addAction("Tier umbenennen …", self._rename_pet)
+
+    def _fill_view_menu(self, menu) -> None:
+        from PySide6.QtGui import QAction, QActionGroup
+
+        menu.clear()
+        group = QActionGroup(menu)
+        for i in range(self.tabs.count()):
+            act = QAction(self.tabs.tabText(i), menu)
+            act.setCheckable(True)
+            act.setChecked(i == self.tabs.currentIndex())
+            act.triggered.connect(lambda _=False, idx=i: self.tabs.setCurrentIndex(idx))
+            group.addAction(act)
+            menu.addAction(act)
+
+    def select_pet(self, pet_id: str) -> None:
+        """Tier wechseln – aus dem Menü oder der Liste; hält beide in Sync."""
+        self.app.switch_pet(pet_id)
+        self._building = True
+        for i in range(self.pet_list.count()):
+            item = self.pet_list.item(i)
+            if item.data(Qt.UserRole) == self.app.pack.id:
+                self.pet_list.setCurrentItem(item)
+        self.name_edit.setText(self.app.pet_name)
+        self._building = False
+        self.title_bar.set_icon(self.app.icon_pixmap(16))
+        self._refresh_preview()
+        self._update_status()
+
+    def _set_size(self, n: int) -> None:
+        btn = self.size_group.button(n)
+        if btn is not None:
+            btn.setChecked(True)
+        self._on_size(n)
+
+    def _rename_pet(self) -> None:
+        self.tabs.setCurrentIndex(0)
+        self.name_edit.setFocus()
+        self.name_edit.selectAll()
+
+    def _revert(self) -> None:
+        self.settings.restore(self._snapshot)
+        self._refresh_all()
+        self._update_status("Verworfen")
 
     # ---------- öffnen / schließen ----------
     def open_fresh(self) -> None:
@@ -579,13 +683,7 @@ class SettingsDialog(RetroWindow):
     def _on_pet_selected(self, item: QListWidgetItem | None, _prev=None) -> None:
         if item is None or self._building:
             return
-        self.app.switch_pet(item.data(Qt.UserRole))
-        self._building = True
-        self.name_edit.setText(self.app.pet_name)
-        self._building = False
-        self.title_bar.set_icon(self.app.icon_pixmap(16))
-        self._refresh_preview()
-        self._update_status()
+        self.select_pet(item.data(Qt.UserRole))
 
     # ------------------------------------------------------------------ #
     # Tab 2: Funktionen

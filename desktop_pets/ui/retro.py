@@ -254,6 +254,16 @@ class RetroWindow(QWidget):
         outer.addWidget(self.body, 1)
         self.status_bar: StatusBar | None = None
 
+    def add_menu_bar(self) -> "QMenuBar":
+        """Klassische Menüleiste unter der Titelleiste (Datei, Bearbeiten, Ansicht, ? …)."""
+        from PySide6.QtWidgets import QMenuBar
+
+        bar = QMenuBar(self)
+        bar.setNativeMenuBar(False)
+        self.layout().insertWidget(1, bar)
+        self.menu_bar = bar
+        return bar
+
     def add_status_bar(self) -> StatusBar:
         self.status_bar = StatusBar(self)
         self.layout().addWidget(self.status_bar)

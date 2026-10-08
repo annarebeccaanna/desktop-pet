@@ -206,6 +206,22 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
     height: 0px;
 }
 
+/* ---------- Menüleiste (wie in XP-Programmen) ---------- */
+QMenuBar {
+    background: ${dialog_bg};
+    border-bottom: 1px solid ${menu_border};
+    padding: 1px 2px;
+}
+QMenuBar::item {
+    background: transparent;
+    padding: 3px 7px;
+    margin: 0px;
+}
+QMenuBar::item:selected, QMenuBar::item:pressed {
+    background: ${selection};
+    color: ${selection_text};
+}
+
 /* ---------- Menüs (Tray & Tier) ---------- */
 QMenu {
     background-color: white;

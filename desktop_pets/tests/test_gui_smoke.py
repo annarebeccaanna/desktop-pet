@@ -141,3 +141,28 @@ def test_send_to_sleep_from_window_walks_into_bed(qapp, tmp_path):
     assert pa.brain.state == State.SLEEP
     assert bed.is_near(pa.body.x, pa.body.y)
     pa.quit()
+
+
+def test_settings_menu_bar_has_pet_chooser(qapp, tmp_path):
+    """Einstellungen haben eine XP-Menüleiste; „Tier ▸ Tier wählen“ wechselt das Tier sofort."""
+    from desktop_pets.core.app import PetApp
+
+    pa = PetApp(qapp, settings_path=tmp_path / "settings.json")
+    pa.qapp.quit = lambda: None
+    pa.start()
+    pa.open_settings()
+    dlg = pa._settings_dialog
+    titles = [a.text().replace("&", "") for a in dlg.menu_bar.actions()]
+    assert titles == ["Datei", "Tier", "Ansicht", "?"]
+    dlg._fill_pet_menu()
+    choose = next(a.menu() for a in dlg.menu_pet.actions() if a.text() == "Tier wählen")
+    names = [a.text() for a in choose.actions()]
+    assert names == [p.name for p in pa.packs.values()]
+    next(a for a in choose.actions() if a.text() == "Drache").trigger()
+    assert pa.pack.id == "dragon"
+    assert dlg.pet_list.currentItem().data(0x0100) == "dragon"   # Liste im Tab folgt
+    dlg._fill_pet_menu()
+    choose = next(a.menu() for a in dlg.menu_pet.actions() if a.text() == "Tier wählen")
+    assert [a.text() for a in choose.actions() if a.isChecked()] == ["Drache"]
+    dlg.close()
+    pa.quit()

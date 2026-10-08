@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1 – Menüleiste im Einstellungsfenster
+
+- Einstellungen haben jetzt eine klassische XP-Menüleiste: **Datei** (Übernehmen `Strg+S`, Änderungen verwerfen, Schließen), **Tier** (**Tier wählen ▸** mit allen Tier-Paketen, Größe ▸, Spiegeln, Originalfarben, Tier umbenennen …), **Ansicht** (Tabs), **?** (Über). Menü, Tierliste und Vorschau bleiben synchron.
+
 ## 0.3.0 – Umbau & Absicherung für Windows
 
 **Behoben**
