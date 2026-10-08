@@ -65,13 +65,39 @@ class Petting(Feature):
 
 @register
 class DayRhythm(Feature):
+    """Abends schläfriger, morgens verspielter (regelt das Gehirn über die Uhrzeit).
+
+    Abends und nachts hält das Tier sein Nickerchen lieber im Körbchen.
+    """
+
     order = 80
     id = "day_rhythm"
     name = "Tagesrhythmus"
-    description = "Abends schläfrig, morgens verspielt"
+    description = "Abends schläfrig (ab ins Körbchen), morgens verspielt"
     default_enabled = True
     allowed_in_pause = True
     pause_label = "ja"
+
+    EVENING_FROM = 21     # Uhr
+    MORNING_UNTIL = 6
+
+    def __init__(self, ctx) -> None:
+        super().__init__(ctx)
+        from datetime import datetime
+
+        self.clock = datetime.now      # in Tests ersetzbar
+
+    def is_night(self) -> bool:
+        hour = self.clock().hour
+        return hour >= self.EVENING_FROM or hour < self.MORNING_UNTIL
+
+    def on_brain_event(self, event: str) -> None:
+        app = self.ctx.app
+        if event != "nap" or app is None or not self.active or self.ctx.modes.paused or not self.is_night():
+            return
+        bed = app.features.get("bed")
+        if bed is not None and bed.enabled and not bed.is_near(app.body.x, app.body.y):
+            bed.send_pet()
 
 
 @register

@@ -101,7 +101,7 @@ class PetApp(QObject):
         self._heart_scaled = self._heart
         self._zzz_scaled = self._zzz
 
-        self.pet_hidden = False
+        self._hidden: set[str] = set()   # Gründe fürs Ausblenden: "user", "fullscreen"
         self.in_bed = False           # Tier liegt (im Pause-Modus) im Körbchen-Fenster
         self.dragging = False
         self.user_idle = 0.0
@@ -208,14 +208,33 @@ class PetApp(QObject):
     def toggle_pause(self) -> None:
         self.modes.toggle_pause()
 
+    @property
+    def pet_hidden(self) -> bool:
+        return bool(self._hidden)
+
+    @property
+    def hidden_by_user(self) -> bool:
+        return "user" in self._hidden
+
     def toggle_visible(self) -> None:
-        self.pet_hidden = not self.pet_hidden
+        self.set_hidden("user", not self.hidden_by_user)
+
+    def set_hidden(self, reason: str, hidden: bool) -> None:
+        """Tier aus- oder einblenden. Sichtbar ist es nur, wenn kein Grund mehr dagegen spricht."""
+        before = self.pet_hidden
+        if hidden:
+            self._hidden.add(reason)
+        else:
+            self._hidden.discard(reason)
+        if self.pet_hidden == before:
+            return
         if self.pet_hidden:
             self.pet_window.hide()
             self.bubble.dismiss()
         elif not self.in_bed:
             self.pet_window.show()
             self.render()
+        self.features.dispatch("on_visibility_changed", not self.pet_hidden)
 
     def switch_pet(self, pet_id: str) -> None:
         if pet_id not in self.packs or pet_id == self.pack.id:

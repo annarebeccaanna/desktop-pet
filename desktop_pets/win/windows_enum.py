@@ -133,8 +133,17 @@ def list_windows(min_w: int = 120, min_h: int = 60) -> list[WinRect]:
     return result
 
 
+def covers_a_screen(rect: tuple[int, int, int, int], screen_rects: list[tuple[int, int, int, int]]) -> bool:
+    """Deckt das Fenster einen ganzen Bildschirm ab (Vollbild)? Reine Logik, testbar."""
+    left, top, right, bottom = rect
+    return any(left <= l and top <= t and right >= r and bottom >= b for l, t, r, b in screen_rects)
+
+
 def foreground_is_fullscreen(screen_rects: list[tuple[int, int, int, int]]) -> bool:
-    """Phase 4: Vollbild-Anwendung im Vordergrund (Spiel, Präsentation)?"""
+    """Läuft im Vordergrund eine Vollbild-Anwendung (Spiel, Präsentation)?
+
+    Der Desktop selbst und die eigenen Fenster zählen nicht.
+    """
     if not IS_WINDOWS:
         return False
     import ctypes
@@ -145,12 +154,16 @@ def foreground_is_fullscreen(screen_rects: list[tuple[int, int, int, int]]) -> b
     hwnd = user32.GetForegroundWindow()
     if not hwnd:
         return False
+    handle = ctypes.c_void_p(hwnd)
+    pid = wintypes.DWORD()
+    user32.GetWindowThreadProcessId(handle, ctypes.byref(pid))
+    if pid.value == os.getpid():
+        return False
     buf = ctypes.create_unicode_buffer(64)
-    user32.GetClassNameW(ctypes.c_void_p(hwnd), buf, 64)
+    user32.GetClassNameW(handle, buf, 64)
     if buf.value in _IGNORED_CLASSES:
         return False
     rect = wintypes.RECT()
-    if not user32.GetWindowRect(ctypes.c_void_p(hwnd), ctypes.byref(rect)):
+    if not user32.GetWindowRect(handle, ctypes.byref(rect)):
         return False
-    return any(rect.left <= l and rect.top <= t and rect.right >= r and rect.bottom >= b
-               for l, t, r, b in screen_rects)
+    return covers_a_screen((rect.left, rect.top, rect.right, rect.bottom), screen_rects)

@@ -11,6 +11,7 @@ Eine Funktion bringt alles in ihrer eigenen Datei mit – über diese Andockpunk
 * ``on_brain_event(e)`` auf Ereignisse reagieren ("petted", "arrived:feed", …)
 * ``menu_actions(w)``   Einträge im Tray- ("tray") oder Tier-Menü ("pet")
 * ``on_sprites_changed()`` / ``on_settings_changed(key, value)`` / ``on_mode_changed(mode)``
+  / ``on_visibility_changed(visible)``
 
 Nur ``enabled`` Funktionen werden gefragt; für ``behaviours``/``contribute`` nur
 ``active`` (also im Pause-Modus nur die erlaubten).
@@ -104,6 +105,9 @@ class Feature:
 
     def on_settings_changed(self, key: str, value: Any) -> None:
         """Optional: eine Einstellung hat sich geändert (key "*" = alles neu geladen)."""
+
+    def on_visibility_changed(self, visible: bool) -> None:
+        """Optional: Tier wurde ein- oder ausgeblendet (Hotkey, Vollbild …)."""
 
     # Hilfen -----------------------------------------------------------------
     def option(self, key: str) -> Any:

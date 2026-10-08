@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.0 – Phase 2 abgeschlossen
+
+- **Ins Körbchen bei Inaktivität:** Nach X Minuten ohne Eingabe geht das Tier erst ins Körbchen (laufend, fliegend, schwimmend – vom Fenster springt es dafür herunter) und schläft dort; Tippen weckt es, auch unterwegs.
+- **Abends ins Körbchen** (`day_rhythm`): Nickerchen ab 21 Uhr und vor 6 Uhr finden im Körbchen statt.
+- **Rücksicht bei Vollbild** (neue Funktion `fullscreen_hide`, ab Werk an): Läuft im Vordergrund ein Spiel oder eine Präsentation im Vollbild, versteckt sich das Tier und kommt danach von selbst zurück. Unabhängig vom eigenen Ausblenden per `Strg + Alt + H`. *(laut Spezifikation eigentlich Phase 4)*
+- **Werte im Rechtsklick-Menü:** Unter dem Namen stehen Hunger und Energie, rechts die Laune.
+- **Hungrig am Napf:** Ist das Tier hungrig, steht der leere Napf bereit; ab und zu setzt es sich daneben und schaut zur Maus. Beim Füttern landet das Futter genau in diesem Napf.
+
+Tests: 109 (neu u. a. Körbchen bei Inaktivität/abends, Vollbild ein/aus, Werte im Menü, Warten am Napf).
+
+**Abnahmekriterien Phase 2 (Nachtrag)**
+- [x] Bei Inaktivität und abends schläft das Tier im Körbchen *(Tests)*
+- [x] Bedürfniswerte im Kopf des Rechtsklick-Menüs *(Test)*
+- [x] Länger nicht gefüttert: sitzt neben dem leeren Napf, schaut zur Maus *(Tests)*
+- [ ] Vollbild-Erkennung – **auf Windows prüfen** (z. B. YouTube im Vollbild oder PowerPoint-Präsentation)
+
 ## 0.4.1 – Einheitliche Struktur: „move“ statt „walk“
 
 - Alle Tiere haben dieselben Animationsdateien; die Fortbewegung heißt jetzt `move` / `move_fast` (vorher `walk` / `run`). Wie sich ein Tier bewegt, zeigen allein seine Bilder – der Code ist für alle gleich, neue Tiere brauchen keine Codeänderung.

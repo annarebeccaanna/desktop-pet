@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtGui import QAction, QActionGroup, QIcon, QPixmap
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QMenu, QSystemTrayIcon, QWidget, QWidgetAction
+from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QMenu, QSystemTrayIcon, QWidget, QWidgetAction
 
 from ..features.base import MenuAction
 from ..win import hotkeys as hk
@@ -24,7 +24,8 @@ def _hotkey_text(combo: str) -> str:
         return ""
 
 
-def _header(menu: QMenu, icon: QPixmap, title: str, right: QWidget | None = None, dark: bool = True) -> None:
+def _header(menu: QMenu, icon: QPixmap, title: str, right: QWidget | None = None, dark: bool = True,
+            subtitle: str = "") -> None:
     t = theme_mod.current()
     w = QWidget(menu)
     w.setObjectName("menuHeader" if dark else "menuHeaderLight")
@@ -36,10 +37,17 @@ def _header(menu: QMenu, icon: QPixmap, title: str, right: QWidget | None = None
     ico.setPixmap(icon)
     ico.setStyleSheet("background: transparent;")
     lay.addWidget(ico)
+    texts = QVBoxLayout()
+    texts.setSpacing(1)
     lab = QLabel(title, w)
     lab.setFont(t.ui_font(9, bold=True))
     lab.setStyleSheet(f"color: {'white' if dark else 'black'}; background: transparent;")
-    lay.addWidget(lab, 1)
+    texts.addWidget(lab)
+    if subtitle:
+        sub = pixel_label(subtitle, color="text_muted", parent=w)
+        sub.setObjectName("menuValues")
+        texts.addWidget(sub)
+    lay.addLayout(texts, 1)
     if right is not None:
         lay.addWidget(right)
     act = QWidgetAction(menu)
@@ -107,7 +115,7 @@ class TrayController:
             MenuAction(f"Pause-Modus\t{_hotkey_text(app.settings.get('hotkeys.toggle_pause'))}",
                        app.toggle_pause, order=10),
             MenuAction("Tier zu mir rufen", app.call_pet, enabled=not paused, order=40),
-            MenuAction(f"{'Tier einblenden' if app.pet_hidden else 'Tier ausblenden'}"
+            MenuAction(f"{'Tier einblenden' if app.hidden_by_user else 'Tier ausblenden'}"
                        f"\t{_hotkey_text(app.settings.get('hotkeys.toggle_visible'))}", app.toggle_visible, order=50),
         ]
         entries = sorted(core + app.features.menu_actions("tray"), key=lambda a: a.order)
@@ -163,7 +171,11 @@ def build_pet_menu(app: "PetApp") -> QMenu:
     mood = app.needs.mood_label if app.features.is_enabled("needs") else ""
     mood_text = {"super": "Super Laune", "gut": "Gute Laune", "okay": "Geht so", "mies": "Schlechte Laune"}.get(mood, "")
     right = pixel_label(mood_text, color="pixel_green" if mood in ("super", "gut") else "pixel_red")
-    _header(m, app.icon_pixmap(16), app.pet_name, right=right, dark=False)
+    values = ""
+    if mood:
+        n = app.needs
+        values = f"Hunger {round(n.hunger)} %  ·  Energie {round(n.energy)} %"
+    _header(m, app.icon_pixmap(16), app.pet_name, right=right, dark=False, subtitle=values)
     core = [MenuAction("Streicheln", app.pet_pet, order=20)]
     if app.is_sleeping:
         core.append(MenuAction("Aufwecken", app.wake_pet, enabled=not paused, order=40))

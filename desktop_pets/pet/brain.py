@@ -293,6 +293,7 @@ class Brain:
             # Ohne Herumstreunen bleibt das Tier an Ort und Stelle
             if lazy > 0.9 and self.rng.random() < 0.3:
                 self.set_state(State.SLEEP, 30 + self.rng.random() * 60)
+                self.events.append("nap")
             else:
                 self.set_state(self.rng.choice([State.SIT, State.IDLE, State.SIT, State.GROOM]),
                           4 + self.rng.random() * 8)
@@ -336,6 +337,7 @@ class Brain:
             self.set_state(State.JUMP, 1e9)
         elif choice == State.SLEEP:
             self.set_state(State.SLEEP, 40 + self.rng.random() * 90)
+            self.events.append("nap")       # z. B. Tagesrhythmus: abends lieber ins Körbchen
         elif choice == State.SIT:
             self.set_state(State.SIT, 4 + self.rng.random() * 10)
         elif choice == State.SULK:
