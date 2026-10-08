@@ -86,6 +86,10 @@ Die Pixel-Art der Start-Tiere liegt als Textdateien in `pets/<id>/art/` – eine
 
 Animationen je Tier (alle Tiere haben dieselben Dateien): `idle`, `move` (Fortbewegung – Katze/Hund laufen, Drache fliegt, Axolotl schwimmt), `move_fast`, `sit`, `sleep`, `groom`, `jump`, `fall`, `happy`, `angry`, `eat` · Übergänge `sit_down`, `stand_up`, `land`, `wake` · ab und zu `yawn`, `fidget`, `special` (Signatur: Katze Schwanz, Hund Wedeln & Hecheln, Drache Flügel & Rauch, Axolotl Kiemen & Schweben). Die 8-Bit-Sounds erzeugt `python tools/make_sounds.py`.
 
+## Pause bei Bildschirmfreigabe (experimentell)
+
+Unter Einstellungen → **Pause & Freigabe** lässt sich die Pause automatisch starten, sobald eine Freigabe erkannt wird. Erkannt werden die Freigabe-Leisten von Teams, Zoom, Webex und den gängigen Browsern. „Erkennung testen …“ zeigt live, was erkannt wird. Eigene Regeln (Programm, Fensterklasse, Titel als regulärer Ausdruck) kommen in `%APPDATA%\DesktopPets\share_signatures.json`.
+
 ## Daten & Datenschutz
 
 * Einstellungen: `%APPDATA%\DesktopPets\settings.json`

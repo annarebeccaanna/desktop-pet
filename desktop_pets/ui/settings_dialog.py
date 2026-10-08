@@ -871,13 +871,27 @@ class SettingsDialog(RetroWindow):
         sl.addWidget(self.cb_always)
         auto_row = QHBoxLayout()
         self.cb_auto = QCheckBox("Pause automatisch starten, wenn eine Freigabe erkannt wird", share)
-        self.cb_auto.setEnabled(False)
-        self.cb_auto.setToolTip("Kommt in Phase 4")
+        self.cb_auto.setToolTip("Erkennt die Freigabe-Leisten von Teams, Zoom, Webex und Browsern.\n"
+                                "Endet die Freigabe, endet auch die automatische Pause.\n"
+                                "Manuell jederzeit überstimmbar.")
+        self.cb_auto.toggled.connect(lambda v: self._set_if_live("pause.auto_detect", v))
         auto_row.addWidget(self.cb_auto)
         auto_row.addStretch(1)
         auto_row.addWidget(pixel_label("Experimentell", parent=share))
         auto_row.itemAt(auto_row.count() - 1).widget().setObjectName("badge")
         sl.addLayout(auto_row)
+        test_row = QHBoxLayout()
+        self.lbl_share = QLabel("", share)
+        self.lbl_share.setObjectName("muted")
+        test_row.addWidget(self.lbl_share, 1)
+        btn_test = QPushButton("Erkennung testen …", share)
+        btn_test.clicked.connect(self._open_share_test)
+        test_row.addWidget(btn_test)
+        sl.addLayout(test_row)
+        if not IS_WINDOWS:
+            note = QLabel("Die Freigabe-Erkennung funktioniert nur unter Windows.", share)
+            note.setObjectName("muted")
+            sl.addWidget(note)
         if not capture.is_supported():
             for cb in (self.cb_exclude, self.cb_always):
                 cb.setEnabled(False)
@@ -896,6 +910,12 @@ class SettingsDialog(RetroWindow):
         self.cb_exclude.setChecked(bool(self.settings.get("pause.exclude_from_capture")))
         self.cb_always.setChecked(bool(self.settings.get("pause.always_exclude")))
         self.cb_auto.setChecked(bool(self.settings.get("pause.auto_detect")))
+        feature = self.app.features.get("share_autopause")
+        if feature is not None and feature.enabled:
+            app_name = feature.sharing_app
+            self.lbl_share.setText(f"Gerade erkannt: {app_name}" if app_name else "Gerade keine Freigabe erkannt.")
+        else:
+            self.lbl_share.setText("Tipp: Erst testen, dann einschalten.")
         paused = self.app.modes.paused
         self.btn_pause.setText("Pause-Modus beenden" if paused else "Pause-Modus starten")
         self.lbl_mode.setText("PAUSE AKTIV" if paused else "NORMALMODUS")
@@ -908,6 +928,13 @@ class SettingsDialog(RetroWindow):
             self._refresh_pause_tab()
             self._building = False
             self._update_status()
+
+    def _open_share_test(self) -> None:
+        from .share_test import ShareTestDialog
+
+        self._share_test = ShareTestDialog(self.app, self)
+        self._share_test.move(self.geometry().center() - self._share_test.rect().center())
+        self._share_test.show()
 
     def _set_if_live(self, key: str, value) -> None:
         if not self._building:

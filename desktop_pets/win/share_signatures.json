@@ -1,0 +1,57 @@
+{
+  "_info": "Regeln zum Erkennen einer Bildschirmfreigabe. Eine Regel passt, wenn alle angegebenen Felder passen. Eigene Regeln: %APPDATA%\\DesktopPets\\share_signatures.json (gleiches Format, wird ergänzt). 'Erkennung testen …' in den Einstellungen zeigt die passenden Fenster.",
+  "rules": [
+    {
+      "app": "Microsoft Teams",
+      "process": [
+        "ms-teams.exe",
+        "teams.exe",
+        "msteams.exe"
+      ],
+      "title": "(?i)(sharing control bar|freigabesteuerleiste|steuerleiste f(ü|ue)r die freigabe|you're sharing|you are sharing|you're presenting|sie (teilen|präsentieren)|bildschirm wird (geteilt|freigegeben)|freigabe beenden|stop sharing|stop presenting|präsentation beenden)"
+    },
+    {
+      "app": "Zoom",
+      "process": [
+        "zoom.exe"
+      ],
+      "title": "(?i)(share toolbar|sharing toolbar|freigabe-?symbolleiste|you are screen sharing|sie teilen ihren bildschirm|freigabe beenden|stop share)"
+    },
+    {
+      "app": "Zoom",
+      "process": [
+        "zoom.exe"
+      ],
+      "class": "^(ZPFloatToolbarClass|ZPShareToolbarWndClass)$"
+    },
+    {
+      "app": "Webex",
+      "process": [
+        "webex.exe",
+        "ciscocollabhost.exe",
+        "webexmta.exe",
+        "atmgr.exe",
+        "ptoneclk.exe"
+      ],
+      "title": "(?i)(you're sharing|you are sharing|sharing your screen|sie (teilen|geben) .*frei|freigabe beenden|stop sharing)"
+    },
+    {
+      "app": "Browser (Meet, Teams im Browser, Jitsi …)",
+      "process": [
+        "chrome.exe",
+        "msedge.exe",
+        "brave.exe",
+        "opera.exe",
+        "vivaldi.exe"
+      ],
+      "title": "(?i)(is sharing (your screen|a window|this tab|your entire screen|a tab)|teilt (ihren|deinen|einen|diesen) (bildschirm|tab|fenster)|teilt den gesamten bildschirm|bildschirm wird (geteilt|freigegeben)|freigabe beenden)"
+    },
+    {
+      "app": "Firefox",
+      "process": [
+        "firefox.exe"
+      ],
+      "title": "(?i)(sharing indicator|freigabe-?indikator|teilen-?indikator)"
+    }
+  ]
+}

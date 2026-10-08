@@ -7,6 +7,7 @@ datas = [
     ("desktop_pets/pets", "desktop_pets/pets"),
     ("desktop_pets/assets", "desktop_pets/assets"),
     ("desktop_pets/themes", "desktop_pets/themes"),
+    ("desktop_pets/win/share_signatures.json", "desktop_pets/win"),
 ]
 
 a = Analysis(

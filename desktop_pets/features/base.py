@@ -67,6 +67,8 @@ class Feature:
     pause_label: str = "aus"         # Kurztext für die Spalte „Pause:“
     available: bool = True            # False = geplant, noch nicht umgesetzt
     order: int = 100                  # Reihenfolge innerhalb der Kategorie
+    listed: bool = True               # False = nicht in der Funktionsliste (eigener Schalter woanders)
+    settings_key: str | None = None   # Schalter liegt unter diesem Einstellungs-Schlüssel statt features.<id>
     options: list[Option] = []
 
     def __init__(self, ctx: "AppContext") -> None:

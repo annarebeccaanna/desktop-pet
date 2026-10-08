@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.0 – Pause automatisch bei Bildschirmfreigabe (experimentell)
+
+- Neues Häkchen unter **Pause & Freigabe**: „Pause automatisch starten, wenn eine Freigabe erkannt wird“ (ab Werk aus).
+- **Erkennung:** Windows meldet eine Freigabe nicht selbst. Erkannt werden deshalb die Freigabe-Leisten der Programme (Teams, Zoom, Webex, Chrome/Edge/Brave/Opera/Vivaldi, Firefox) anhand von Programm, Fensterklasse und Titel – geprüft jede Sekunde.
+- **Regeln ohne Codeänderung erweiterbar:** `desktop_pets/win/share_signatures.json` (mitgeliefert) plus eigene Regeln in `%APPDATA%\DesktopPets\share_signatures.json`.
+- **„Erkennung testen …“:** zeigt live die Fenster der Meeting-Programme und Browser, markiert die erkannten, kopiert die Liste in die Zwischenablage und legt bei Bedarf die eigene Regeldatei an.
+- **Verhalten:** Freigabe beginnt → Pause an. Freigabe endet → Pause aus, aber nur, wenn die Automatik sie eingeschaltet hat. Manuell überstimmbar: Wer während der Freigabe die Pause ausschaltet, behält das bis zur nächsten Freigabe. Tray-Tooltip und -Menü zeigen „Freigabe erkannt“.
+- Technisch: Funktionen können ihren Schalter an eine beliebige Einstellung binden (`settings_key`) und aus der Funktionsliste ausgeblendet werden (`listed = False`).
+
+Tests: 119 (neu: Erkennungsregeln mit typischen Fenstertiteln, Start/Ende der Pause, manuelles Überstimmen, Abschalten, Testfenster).
+
+- [ ] **Auf Windows prüfen:** Freigabe in Teams (und ggf. Zoom/Browser) starten → Pause an; beenden → Pause aus. Wird nichts erkannt: „Erkennung testen …“ öffnen, „Kopieren“ und die Liste schicken – dann wird die Regel nachgeschärft.
+
 ## 0.5.0 – Phase 2 abgeschlossen
 
 - **Ins Körbchen bei Inaktivität:** Nach X Minuten ohne Eingabe geht das Tier erst ins Körbchen (laufend, fliegend, schwimmend – vom Fenster springt es dafür herunter) und schläft dort; Tippen weckt es, auch unterwegs.

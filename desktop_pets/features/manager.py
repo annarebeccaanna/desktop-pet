@@ -46,20 +46,21 @@ class FeatureManager:
     def by_category(self) -> list[tuple[str, str, list[Feature]]]:
         out = []
         for cat, label in CATEGORIES:
-            items = sorted((f for f in self.features.values() if f.category == cat), key=lambda f: f.order)
+            items = sorted((f for f in self.features.values() if f.category == cat and f.listed),
+                           key=lambda f: f.order)
             if items:
                 out.append((cat, label, items))
         return out
 
     def counts(self) -> tuple[int, int]:
         """(aktiv, gesamt) – für die Statusleiste."""
-        total = len(self.features)
-        return sum(1 for f in self.features.values() if f.enabled), total
+        listed = [f for f in self.features.values() if f.listed]
+        return sum(1 for f in listed if f.enabled), len(listed)
 
     # ---------- Schalten ----------
     def start(self) -> None:
         for fid, f in self.features.items():
-            if f.available and self.ctx.settings.feature_enabled(fid, f.default_enabled):
+            if f.available and self._wanted(f):
                 self._enable(f)
 
     def set_enabled(self, fid: str, enabled: bool, persist: bool = True) -> bool:
@@ -67,7 +68,10 @@ class FeatureManager:
         if f is None or not f.available:
             return False
         if persist:
-            self.ctx.settings.set_feature_enabled(fid, enabled)
+            if f.settings_key:
+                self.ctx.settings.set(f.settings_key, bool(enabled))
+            else:
+                self.ctx.settings.set_feature_enabled(fid, enabled)
         if enabled and not f.enabled:
             self._enable(f)
         elif not enabled and f.enabled:
@@ -79,7 +83,7 @@ class FeatureManager:
         for fid, f in self.features.items():
             if not f.available:
                 continue
-            want = self.ctx.settings.feature_enabled(fid, f.default_enabled)
+            want = self._wanted(f)
             if want != f.enabled:
                 self.set_enabled(fid, want, persist=False)
 
@@ -148,7 +152,15 @@ class FeatureManager:
             self._disable(f)
             return False
 
+    def _wanted(self, f: Feature) -> bool:
+        if f.settings_key:
+            return bool(self.ctx.settings.get(f.settings_key, f.default_enabled))
+        return self.ctx.settings.feature_enabled(f.id, f.default_enabled)
+
     def _on_settings_changed(self, key, value) -> None:
+        for f in self.features.values():
+            if f.settings_key and f.settings_key == key and f.available and bool(value) != f.enabled:
+                self.set_enabled(f.id, bool(value), persist=False)
         self.dispatch("on_settings_changed", key, value)
 
     def _on_mode_changed(self, mode, previous) -> None:  # noqa: ARG002

@@ -97,6 +97,9 @@ class TrayController:
         icon = self.app.tray_icon_pixmap()
         self.tray.setIcon(QIcon(icon))
         mode = "Pause-Modus" if self.app.modes.paused else "Normal"
+        share = self.app.features.get("share_autopause")
+        if share is not None and share.enabled and share.sharing_app:
+            mode += f", Freigabe erkannt: {share.sharing_app}"
         self.tray.setToolTip(f"Desktop Pets – {self.app.pet_name} ({mode})")
 
     def _on_activated(self, reason) -> None:
@@ -142,6 +145,9 @@ class TrayController:
         fields = [f"Aufnahme-Schutz {protect}"]
         if pending:
             fields.append(f"{pending} Meldung{'en' if pending != 1 else ''} warten")
+        share = app.features.get("share_autopause")
+        if share is not None and share.enabled and share.sharing_app:
+            fields.append("Freigabe erkannt")
         _footer(m, fields)
 
     def _add_pet_chooser(self, m: QMenu) -> None:
