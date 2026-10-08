@@ -20,7 +20,7 @@ import random
 
 from .animator import Animator
 
-GROUP = {"walk": "side", "run": "side", "land": "side", "stand_up": "side",
+GROUP = {"move": "side", "move_fast": "side", "land": "side", "stand_up": "side",
          "jump": "air", "fall": "air", "sleep": "sleep"}          # alles andere: "front"
 TRANSITION_END = {"sit_down": "front", "stand_up": "side", "land": "side", "wake": "front"}
 BLOCKING = set(TRANSITION_END)      # währenddessen steht das Tier still (keine Rutschpartie)

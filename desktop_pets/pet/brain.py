@@ -29,7 +29,7 @@ class State(str, Enum):
 
 
 ANIMATION_FOR = {
-    State.IDLE: "idle", State.WALK: "walk", State.RUN: "run", State.SIT: "sit",
+    State.IDLE: "idle", State.WALK: "move", State.RUN: "move_fast", State.SIT: "sit",
     State.SLEEP: "sleep", State.GROOM: "groom", State.JUMP: "jump", State.FALL: "fall",
     State.HAPPY: "happy", State.ANGRY: "angry", State.EAT: "eat", State.SULK: "sit",
     State.DRAGGED: "fall",
@@ -275,7 +275,7 @@ class Brain:
             return self.intent()
         self.facing = 1 if dx > 0 else -1
         speed = self.run_speed if run else self.walk_speed
-        anim = "run" if run else "walk"
+        anim = "move_fast" if run else "move"
         return Intent(animation=anim, vx=self.facing * speed, facing=self.facing)
 
     def _choose_next(self, p: Perception) -> None:

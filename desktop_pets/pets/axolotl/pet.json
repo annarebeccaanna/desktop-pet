@@ -37,27 +37,25 @@
       ],
       "fps": 0.66
     },
-    "walk": {
+    "move": {
       "row": 1,
       "frames": 4,
       "durations": [
-        130,
-        130,
-        130,
-        130
+        170,
+        170,
+        170,
+        170
       ],
-      "fps": 7.69
+      "fps": 5.88
     },
-    "run": {
+    "move_fast": {
       "row": 2,
-      "frames": 4,
+      "frames": 2,
       "durations": [
-        70,
-        70,
-        70,
-        70
+        90,
+        90
       ],
-      "fps": 14.29
+      "fps": 11.11
     },
     "sit": {
       "row": 3,
@@ -94,20 +92,20 @@
       "row": 6,
       "frames": 2,
       "durations": [
-        80,
-        200
+        90,
+        220
       ],
-      "fps": 7.14,
+      "fps": 6.45,
       "loop": false
     },
     "fall": {
       "row": 7,
       "frames": 2,
       "durations": [
-        160,
-        160
+        180,
+        180
       ],
-      "fps": 6.25
+      "fps": 5.56
     },
     "happy": {
       "row": 8,

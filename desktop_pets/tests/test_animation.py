@@ -14,7 +14,7 @@ from desktop_pets.pet.textsprites import ORDER, ArtError, load_art, parse_file
 def full_set():
     one = lambda row, n=2, loop=True: AnimationDef(row, n, 8, loop)   # noqa: E731
     return {
-        "idle": one(0), "walk": one(1, 4), "run": one(2, 4), "sit": one(3), "sleep": one(4),
+        "idle": one(0), "move": one(1, 4), "move_fast": one(2, 4), "sit": one(3), "sleep": one(4),
         "jump": one(5, 2, False), "fall": one(6), "sit_down": one(7, 2, False), "stand_up": one(8, 2, False),
         "land": one(9, 2, False), "wake": one(10, 2, False), "fidget": one(11, 2, False),
         "yawn": one(12, 2, False), "special": one(13, 2, False),
@@ -53,7 +53,7 @@ def test_single_frame_one_shot_finishes():
 # ---------- Choreografie ----------
 def test_walk_to_sit_plays_sit_down():
     ch = Choreographer(Animator(full_set()), random.Random(1))
-    run(ch, "walk", 1)
+    run(ch, "move", 1)
     seen = run(ch, "sit", 1)
     assert seen[:2] == ["sit_down", "sit"]
 
@@ -61,24 +61,24 @@ def test_walk_to_sit_plays_sit_down():
 def test_sit_to_walk_plays_stand_up_and_blocks_movement():
     ch = Choreographer(Animator(full_set()), random.Random(1))
     run(ch, "sit", 1)
-    ch.update("walk", 1 / 30)
+    ch.update("move", 1 / 30)
     assert ch.animator.name == "stand_up" and ch.blocking
-    seen = run(ch, "walk", 1)
-    assert seen[-1] == "walk" and not ch.blocking
+    seen = run(ch, "move", 1)
+    assert seen[-1] == "move" and not ch.blocking
 
 
 def test_landing_and_waking_transitions():
     ch = Choreographer(Animator(full_set()), random.Random(1))
     run(ch, "fall", 0.5)
-    assert run(ch, "walk", 1)[:2] == ["land", "walk"]
+    assert run(ch, "move", 1)[:2] == ["land", "move"]
     run(ch, "sleep", 1)
-    assert run(ch, "walk", 1)[:3] == ["wake", "stand_up", "walk"]
+    assert run(ch, "move", 1)[:3] == ["wake", "stand_up", "move"]
 
 
 def test_jumping_interrupts_a_transition_immediately():
     ch = Choreographer(Animator(full_set()), random.Random(1))
     run(ch, "sit", 1)
-    ch.update("walk", 1 / 30)
+    ch.update("move", 1 / 30)
     assert ch.animator.name == "stand_up"
     ch.update("jump", 1 / 30)
     assert ch.animator.name == "jump"
@@ -94,7 +94,7 @@ def test_idle_extras_appear_and_stop_when_moving():
         ch.update("idle", 1 / 30)
         if ch.transient in ("fidget", "yawn", "special"):
             break
-    assert run(ch, "walk", 1)[:2] == ["stand_up", "walk"]
+    assert run(ch, "move", 1)[:2] == ["stand_up", "move"]
 
 
 def test_quiet_extras_in_pause_and_no_extras_while_walking():
@@ -102,14 +102,14 @@ def test_quiet_extras_in_pause_and_no_extras_while_walking():
     seen = run(ch, "idle", 120, quiet=True)
     assert "special" not in seen
     ch2 = Choreographer(Animator(full_set()), random.Random(3))
-    seen2 = run(ch2, "walk", 120)
+    seen2 = run(ch2, "move", 120)
     assert not {"fidget", "yawn", "special"} & set(seen2)
 
 
 def test_missing_transitions_are_skipped():
-    minimal = {"idle": AnimationDef(0, 2, 4), "walk": AnimationDef(1, 2, 4), "sit": AnimationDef(2, 2, 4)}
+    minimal = {"idle": AnimationDef(0, 2, 4), "move": AnimationDef(1, 2, 4), "sit": AnimationDef(2, 2, 4)}
     ch = Choreographer(Animator(minimal), random.Random(1))
-    run(ch, "walk", 1)
+    run(ch, "move", 1)
     assert run(ch, "sit", 1) == ["sit"]
 
 
@@ -124,7 +124,7 @@ def test_every_pet_has_all_animations_as_text(pid):
     assert art.roles.get("primary") and art.roles.get("secondary")
     assert {"bed", "food"} <= set(art.images)
     # Laufen/Rennen: Seitenansicht ⇒ asymmetrisch (Spiegeln zeigt die andere Richtung)
-    walk = art.animation("walk").frames[0]
+    walk = art.animation("move").frames[0]
     assert walk != [row[::-1] for row in walk]
 
 
@@ -171,3 +171,27 @@ def test_palette_comments_keep_hex_colors(tmp_path):
     colors, roles = parse_palette(pal)
     assert colors["O"] == (0xE8, 0x9C, 0x3C, 255) and colors["."] is None
     assert roles == {"primary": "#E89C3C"}
+
+
+def test_old_packs_with_walk_and_run_still_work(tmp_path):
+    """Tier-Pakete von früher heißen noch walk/run – sie bewegen sich trotzdem."""
+    import json
+
+    src = resource_dir() / "pets" / "cat"
+    dst = tmp_path / "oldcat"
+    dst.mkdir()
+    (dst / "sprites.png").write_bytes((src / "sprites.png").read_bytes())
+    (dst / "pet.json").write_text(json.dumps({"id": "oldcat", "sprite_size": [16, 16], "animations": {
+        "idle": {"row": 0, "frames": 3}, "walk": {"row": 1, "frames": 4}, "run": {"row": 2, "frames": 4}}}),
+        encoding="utf-8")
+    pack = discover_packs([tmp_path])["oldcat"]
+    assert pack.animations["move"] == pack.animations["walk"]
+    assert pack.animations["move_fast"] == pack.animations["run"]
+
+
+@pytest.mark.parametrize("pid", PETS)
+def test_all_pets_share_the_same_structure(pid):
+    """Gleiche Dateien für alle Tiere – Drache fliegt und Axolotl schwimmt in ihrem „move“."""
+    names = sorted(p.stem for p in (resource_dir() / "pets" / pid / "art").glob("*.txt"))
+    cat = sorted(p.stem for p in (resource_dir() / "pets" / "cat" / "art").glob("*.txt"))
+    assert names == cat

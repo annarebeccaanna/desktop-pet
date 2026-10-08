@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1 – Einheitliche Struktur: „move“ statt „walk“
+
+- Alle Tiere haben dieselben Animationsdateien; die Fortbewegung heißt jetzt `move` / `move_fast` (vorher `walk` / `run`). Wie sich ein Tier bewegt, zeigen allein seine Bilder – der Code ist für alle gleich, neue Tiere brauchen keine Codeänderung.
+- **Drache fliegt:** Flügelschlag (oben – Mitte – unten), Beine angezogen, schwebt über dem Boden; Abheben und Gleiten bei `jump`/`fall`.
+- **Axolotl schwimmt:** Wellenbewegung von Körper und Schwanzflosse, wehende Kiemen, gemütlicher Takt.
+- Ältere Tier-Pakete mit `walk`/`run` funktionieren weiter (werden automatisch als `move`/`move_fast` genutzt).
+
 ## 0.4.0 – Neue Animationen (Option B)
 
 - **Seitenansicht fürs Laufen, Rennen und Springen** bei allen vier Tieren – Spiegeln für links/rechts wirkt jetzt richtig. Sitzen, Fressen, Freuen, Putzen und Schlafen bleiben von vorn wie in den Mockups.

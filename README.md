@@ -69,7 +69,7 @@ Ablegen in `desktop_pets/pets/` oder in `%APPDATA%\DesktopPets\pets\`. Fehlt ein
 Die Pixel-Art der Start-Tiere liegt als Textdateien in `pets/<id>/art/` – eine Datei je Animation, ein Zeichen je Pixel. Du kannst sie direkt in VS Code bearbeiten:
 
 ```
-# Katze – Laufen – Seitenansicht, Blick nach rechts (nach links wird gespiegelt)
+# Katze – Fortbewegung: läuft (Seitenansicht, Blick nach rechts; nach links wird gespiegelt)
 @durations 130 130 130 130        ← Dauer je Bild in ms
 
 ................
@@ -80,10 +80,11 @@ Die Pixel-Art der Start-Tiere liegt als Textdateien in `pets/<id>/art/` – eine
 
 * `palette.txt` legt fest, welches Zeichen welche Farbe ist (`primary`/`secondary` lassen sich in der App umfärben).
 * Bilder in einer Datei sind durch Leerzeilen getrennt; `@loop false` für Einmal-Animationen.
-* Seitenansichten (laufen, rennen, springen) blicken nach rechts, Sitzen/Fressen/Freuen sind von vorn.
+* Seitenansichten (`move`, `move_fast`, `jump`, `fall`) blicken nach rechts, Sitzen/Fressen/Freuen sind von vorn.
+* Ein neues Tier braucht nur diese Dateien – wie es sich bewegt (laufen, fliegen, schwimmen …), zeigen allein die Bilder.
 * Danach `python tools/make_sprites.py` ausführen (Pillow nötig) – das erzeugt `sprites.png`, `icon.png` usw. und aktualisiert die Animationsliste in `pet.json`. Ein Test prüft, dass beides zusammenpasst.
 
-Animationen je Tier: `idle`, `walk`, `run`, `sit`, `sleep`, `groom`, `jump`, `fall`, `happy`, `angry`, `eat` · Übergänge `sit_down`, `stand_up`, `land`, `wake` · ab und zu `yawn`, `fidget`, `special` (Signatur: Katze Schwanz, Hund Wedeln & Hecheln, Drache Flügel & Rauch, Axolotl Kiemen & Schweben). Die 8-Bit-Sounds erzeugt `python tools/make_sounds.py`.
+Animationen je Tier (alle Tiere haben dieselben Dateien): `idle`, `move` (Fortbewegung – Katze/Hund laufen, Drache fliegt, Axolotl schwimmt), `move_fast`, `sit`, `sleep`, `groom`, `jump`, `fall`, `happy`, `angry`, `eat` · Übergänge `sit_down`, `stand_up`, `land`, `wake` · ab und zu `yawn`, `fidget`, `special` (Signatur: Katze Schwanz, Hund Wedeln & Hecheln, Drache Flügel & Rauch, Axolotl Kiemen & Schweben). Die 8-Bit-Sounds erzeugt `python tools/make_sounds.py`.
 
 ## Daten & Datenschutz
 

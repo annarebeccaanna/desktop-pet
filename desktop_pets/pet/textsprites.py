@@ -35,7 +35,7 @@ from pathlib import Path
 
 # Reihenfolge der Zeilen im Sprite-Sheet (weitere Animationen werden alphabetisch angehängt)
 ORDER = [
-    "idle", "walk", "run", "sit", "sleep", "groom", "jump", "fall", "happy", "angry", "eat",
+    "idle", "move", "move_fast", "sit", "sleep", "groom", "jump", "fall", "happy", "angry", "eat",
     "sit_down", "stand_up", "land", "wake", "yawn", "fidget", "special",
 ]
 IMAGES = {"bed", "food", "bowl", "icon"}      # Einzelbilder, keine Animationen

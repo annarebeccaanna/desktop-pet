@@ -39,7 +39,7 @@ if TYPE_CHECKING:  # pragma: no cover
 class PetPreview(QWidget):
     """Weiße „Leinwand“ mit animierter Tiervorschau (Klick wechselt die Animation)."""
 
-    CYCLE = ["idle", "walk", "run", "special", "happy", "fidget", "groom", "jump", "sleep", "eat", "angry"]
+    CYCLE = ["idle", "move", "move_fast", "special", "happy", "fidget", "groom", "jump", "sleep", "eat", "angry"]
     TICK_MS = 40
 
     def __init__(self, parent: QWidget | None = None, checker: bool = True, background: str | None = None) -> None:

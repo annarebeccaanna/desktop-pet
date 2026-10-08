@@ -16,8 +16,11 @@ from ..core.log import get_logger
 log = get_logger("pack")
 
 ANIMATION_NAMES = (
-    "idle", "walk", "run", "sit", "sleep", "groom", "jump", "fall", "happy", "angry", "eat",
+    "idle", "move", "move_fast", "sit", "sleep", "groom", "jump", "fall", "happy", "angry", "eat",
+    "sit_down", "stand_up", "land", "wake", "yawn", "fidget", "special",
 )
+# Ältere Tier-Pakete nennen die Fortbewegung noch „walk“/„run“ – sie funktionieren weiter.
+ALIASES = {"move": "walk", "move_fast": "run"}
 
 
 @dataclass(frozen=True)
@@ -93,6 +96,11 @@ def _parse_animations(raw: Any) -> dict[str, AnimationDef]:
             raise PackError(f"Animation {name!r} ungültig: {exc}") from exc
     if "idle" not in out:
         raise PackError("Animation 'idle' ist Pflicht (Rückfall für alle anderen)")
+    for new, old in ALIASES.items():
+        if new not in out and old in out:
+            out[new] = out[old]
+    if "move_fast" not in out and "move" in out:
+        out["move_fast"] = out["move"]
     return out
 
 

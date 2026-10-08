@@ -1,4 +1,4 @@
-# Drache – Absprung (geduckt) und Flug (Beine angezogen)
+# Drache – Abheben: Flügel runter, dann hoch
 @durations 80 200
 @loop false
 
@@ -7,23 +7,22 @@
 ................
 ................
 ............P...
-...PP.......KP..
-..KPPK.....KOOK.
-PKPPPPK...KOOOOK
-KOKPPPKK..KOAKOK
-.KOKPKOOKKOOOOOK
-..KOOOOOOOOCCKK.
-..KOOOOOOOCCCK..
-..KOOOOOOOOCCK..
+............KP..
+...........KOOK.
+P.........KOOOOK
+KOK.......KOAKOK
+.KOKKKKKKKOOOOOK
+..KOOKPPPKOCCKK.
+..KOKPPPPPKCCK..
+..KOOKPPPKOCCK..
 ..KKKKKKKKKKKK..
-..KOOK....KOOK..
-..KKKK....KKKK..
+...KOKK.KOKK....
+....KKK.KKK.....
 
 ................
-................
-............P...
-...PP.......KP..
-..KPPK.....KOOK.
+...PP.......P...
+..KPPK......KP..
+.KPPPPK....KOOK.
 PKPPPPK...KOOOOK
 KOKPPPKK..KOAKOK
 .KOKPKOOKKOOOOOK
@@ -33,5 +32,6 @@ KOKPPPKK..KOAKOK
 ..KKKKKKKKKKKK..
 ...KOKK.KOKK....
 ....KKK.KKK.....
+................
 ................
 ................

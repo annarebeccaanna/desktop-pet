@@ -37,7 +37,7 @@
       ],
       "fps": 0.66
     },
-    "walk": {
+    "move": {
       "row": 1,
       "frames": 4,
       "durations": [
@@ -48,7 +48,7 @@
       ],
       "fps": 7.69
     },
-    "run": {
+    "move_fast": {
       "row": 2,
       "frames": 4,
       "durations": [

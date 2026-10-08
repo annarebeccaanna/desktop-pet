@@ -37,23 +37,21 @@
       ],
       "fps": 0.66
     },
-    "walk": {
+    "move": {
       "row": 1,
       "frames": 4,
       "durations": [
-        130,
-        130,
-        130,
-        130
+        120,
+        120,
+        120,
+        120
       ],
-      "fps": 7.69
+      "fps": 8.33
     },
-    "run": {
+    "move_fast": {
       "row": 2,
-      "frames": 4,
+      "frames": 2,
       "durations": [
-        70,
-        70,
         70,
         70
       ],
@@ -104,10 +102,10 @@
       "row": 7,
       "frames": 2,
       "durations": [
-        160,
-        160
+        140,
+        140
       ],
-      "fps": 6.25
+      "fps": 7.14
     },
     "happy": {
       "row": 8,
