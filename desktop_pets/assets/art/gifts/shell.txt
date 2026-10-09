@@ -1,0 +1,13 @@
+# Muschel (Axolotl)
+@color K #000000
+@color P #F8B8C8
+@color p #D87898
+
+...KKKKK...
+..KPpPpPK..
+.KPpPpPpPK.
+KPpPpPpPpPK
+KPpPpPpPpPK
+.KPpPpPpPK.
+..KKKKKKK..
+....KpK....

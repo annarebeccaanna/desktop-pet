@@ -1,0 +1,12 @@
+# Knochen (Hund)
+@color K #000000
+@color W #FFF6E0
+@color w #D8C8A0
+
+.KK......KK.
+KWWK....KWWK
+KWWWKKKKWWwK
+.KWWWWWWWWK.
+KWWWKKKKWwwK
+KWwK....KwwK
+.KK......KK.

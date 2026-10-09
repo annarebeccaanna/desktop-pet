@@ -1,0 +1,14 @@
+# Edelstein (Drache)
+@color K #000000
+@color G #3CC878
+@color g #1E8A50
+@color W #D8FFE8
+
+..KKKKK..
+.KWGGGgK.
+KWGGGGGgK
+KKKKKKKKK
+.KGGGGgK.
+..KGGgK..
+...KGK...
+....K....

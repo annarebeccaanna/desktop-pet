@@ -1,0 +1,14 @@
+# Goldmünze (Drache)
+@color K #000000
+@color Y #F8C33A
+@color O #C88A1E
+@color W #FFF4C0
+
+..KKKKK..
+.KYWYYYK.
+KYWYOOYOK
+KYYOYYYOK
+KYYOYYYOK
+KYYYOOYOK
+.KYYYYOK.
+..KKKKK..

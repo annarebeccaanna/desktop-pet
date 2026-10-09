@@ -1,0 +1,15 @@
+# Pixelmaus (Katze)
+@color K #000000
+@color G #9AA0A8
+@color g #6E747C
+@color P #F4A0B0
+
+............
+..KK........
+.KPGK.......
+.KGGGKKKK...
+KGKGGGGGGK..
+KGGGGGGGgK..
+.KGGGGGggKK.
+..KKKKKKK.KK
+..........K.

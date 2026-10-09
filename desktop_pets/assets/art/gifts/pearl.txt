@@ -1,0 +1,14 @@
+# Perle (Axolotl)
+@color K #000000
+@color W #FFFFFF
+@color L #D8E0F0
+@color B #A8B4D0
+
+..KKKK..
+.KWWLLK.
+KWWLLLBK
+KWLLLLBK
+KLLLLBBK
+KLLLBBBK
+.KLBBBK.
+..KKKK..

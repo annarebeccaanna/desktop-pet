@@ -11,7 +11,6 @@ planned("calendar_alerts", "Kalender", "Miaut vor Terminen (Outlook oder ICS)", 
 planned("event_webhook", "Build & Tests", "Lokaler Webhook: Freudensprung oder Fauchen", "work", "stumm", "Phase 3", 40)
 
 # Chaos & Spaß – Phase 4 (ab Werk aus)
-planned("gifts", "Geschenke", "Bringt Pixelmäuse und Wollknäuel", "chaos", "aus", "Phase 4", 10)
 planned("icon_shuffle", "Icons schubsen", "Verschiebt Desktop-Icons (wiederherstellbar)", "chaos", "aus", "Phase 4", 20)
 planned("cursor_steal", "Maus klauen", "Schnappt sich kurz den Mauszeiger", "chaos", "aus", "Phase 4", 30)
 

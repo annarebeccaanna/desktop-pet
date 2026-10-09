@@ -1,0 +1,15 @@
+# Wollknäuel (Katze)
+@color K #000000
+@color R #E2563A
+@color r #B8361E
+@color W #F8A090
+
+..KKKKK....
+.KRWRRRK...
+KRRWRRrRK..
+KRRRWRRrK..
+KRWRRWRrK..
+KRRWRRrrK..
+.KRRrrrK...
+..KKKKK.KK.
+.........KK
