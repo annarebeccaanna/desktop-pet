@@ -990,6 +990,28 @@ class SettingsDialog(RetroWindow):
         sg.addWidget(hint, 3, 0, 1, 5)
         lay.addWidget(snd)
 
+        cop = QGroupBox("Copilot-Taste", page)
+        cg = QGridLayout(cop)
+        self.cb_copilot = QCheckBox("Copilot-Taste für Desktop Pets verwenden", cop)
+        self.cb_copilot.setToolTip("Win + Umschalt + F23 – solange aktiv, öffnet die Taste nicht Copilot.")
+        self.cb_copilot.toggled.connect(self._on_copilot_toggled)
+        cg.addWidget(self.cb_copilot, 0, 0)
+        cg.addWidget(QLabel("Aktion:", cop), 0, 1, Qt.AlignRight)
+        self.combo_copilot = QComboBox(cop)
+        from ..features.copilot_key import ACTIONS
+
+        for value, label in ACTIONS:
+            self.combo_copilot.addItem(label, value)
+        self.combo_copilot.currentIndexChanged.connect(
+            lambda _i: self._set_value_if_live("general.copilot_action", self.combo_copilot.currentData()))
+        cg.addWidget(self.combo_copilot, 0, 2)
+        cg.setColumnStretch(3, 1)
+        self.lbl_copilot = QLabel("", cop)
+        self.lbl_copilot.setObjectName("muted")
+        self.lbl_copilot.setWordWrap(True)
+        cg.addWidget(self.lbl_copilot, 1, 0, 1, 4)
+        lay.addWidget(cop)
+
         lang = QGroupBox("Sprache", page)
         lg = QHBoxLayout(lang)
         lg.addWidget(QLabel("Sprache:", lang))
@@ -1021,7 +1043,26 @@ class SettingsDialog(RetroWindow):
         lay.addStretch(1)
         return page
 
+    def _on_copilot_toggled(self, enabled: bool) -> None:
+        self._set_if_live("general.copilot_key", enabled)
+        self._refresh_copilot_status()
+
+    def _set_value_if_live(self, key: str, value) -> None:
+        if not self._building:
+            self.settings.set(key, value)
+
+    def _refresh_copilot_status(self) -> None:
+        feature = self.app.features.get("copilot_key")
+        text = feature.status if feature is not None else ""
+        text += "  Eine Umbelegung derselben Taste in PowerToys bitte vorher entfernen."
+        self.lbl_copilot.setText(text)
+        self.cb_copilot.setEnabled(bool(feature and feature.hook.available))
+
     def _refresh_general_tab(self) -> None:
+        self.cb_copilot.setChecked(bool(self.settings.get("general.copilot_key")))
+        idx = self.combo_copilot.findData(self.settings.get("general.copilot_action", "settings"))
+        self.combo_copilot.setCurrentIndex(max(0, idx))
+        self._refresh_copilot_status()
         self.cb_autostart.setChecked(autostart.is_enabled() if autostart.is_supported()
                                      else bool(self.settings.get("general.autostart")))
         self.cb_pet_sounds.setChecked(bool(self.settings.get("general.pet_sounds", True)))

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0 – Copilot-Taste
+
+- Einstellungen → **Allgemein → Copilot-Taste**: Häkchen „Copilot-Taste für Desktop Pets verwenden“ (ab Werk aus) plus Aktion: **Einstellungen öffnen** (Standard), Tier zu mir rufen, Pause-Modus umschalten. Später kommt „KI-Chat öffnen“ dazu.
+- Technik: Die Taste sendet Win + Umschalt + F23. Ein Low-Level-Tastatur-Hook in eigenem Thread schluckt *nur* diese Kombination, alles andere läuft unberührt durch. Ein unbelegter Dummy-Tastendruck verhindert, dass beim Loslassen der Win-Taste das Startmenü aufgeht. Häkchen raus oder App beendet → die Taste gehört wieder Windows.
+- Hinweis: Eine Umbelegung derselben Taste in PowerToys vorher entfernen, sonst greifen beide zu.
+
+Tests: 139 (neu: Tastenerkennung inkl. Wiederholung/fremder Tasten/künstlicher Tasten, Häkchen, Aktionen).
+
+- [ ] **Auf Windows prüfen:** Häkchen setzen → Copilot-Taste öffnet die Einstellungen, kein Copilot, kein Startmenü. Häkchen raus → Copilot öffnet wieder.
+
 ## 0.7.1 – Tiergeräusche einzeln abschaltbar
 
 - Einstellungen → **Allgemein → Ton**: statt eines einzigen „Stumm“ jetzt zwei Häkchen –

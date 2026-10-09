@@ -47,6 +47,8 @@ DEFAULTS: dict[str, Any] = {
         "volume": 70,
         "pet_sounds": True,       # Tier macht Geräusche (Miau, Schnurren, Bellen …)
         "notice_sounds": True,    # Hinweistöne (z. B. Pomodoro-„Pling“)
+        "copilot_key": False,     # Copilot-Taste (Win + Umschalt + F23) für Desktop Pets nutzen
+        "copilot_action": "settings",
         "language": "de",
     },
     "theme": "retro_xp",
