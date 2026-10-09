@@ -16,6 +16,19 @@ BASE_RULES = (
 )
 
 
+SERIOUS_RULES = (
+    "Du bist ein sachlicher, kompetenter Assistent. Antworte auf Deutsch, präzise, korrekt und so "
+    "ausführlich wie nötig. Die Antwort wird als reiner Text angezeigt: kein Markdown (keine "
+    "Sternchen, Rauten oder Tabellen); Aufzählungen mit „–“ sind in Ordnung."
+)
+
+
+def serious_prompt(custom: str = "") -> str:
+    """Sachliche Anfrage: ohne Tier-Rolle (Spezialanweisungen aus den Einstellungen dazu)."""
+    custom = (custom or "").strip()
+    return f"{SERIOUS_RULES}\n\n{custom}" if custom else SERIOUS_RULES
+
+
 def system_prompt(name: str, personality: str) -> str:
     rules = BASE_RULES.format(name=name or "Pixeltier")
     personality = (personality or "").strip()

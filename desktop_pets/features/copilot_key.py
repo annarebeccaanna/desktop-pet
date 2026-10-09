@@ -23,7 +23,7 @@ ACTIONS = [
 class _Bridge(QObject):
     """Hook-Thread → GUI-Thread (Qt stellt das Signal automatisch in die Warteschlange)."""
 
-    fired = Signal(bool)            # alt: Alt war gedrückt (Alt + Copilot)
+    fired = Signal(bool, bool)      # alt (Spracheingabe), ctrl (sachliche Anfrage)
 
 
 @register
@@ -65,17 +65,20 @@ class CopilotKey(Feature):
     def disable(self) -> None:
         self.hook.stop()
 
-    def trigger(self, alt: bool = False) -> None:
-        """Copilot-Taste gedrückt (läuft im GUI-Thread). Alt + Copilot = Spracheingabe."""
+    def trigger(self, alt: bool = False, ctrl: bool = False) -> None:
+        """Copilot-Taste gedrückt (läuft im GUI-Thread).
+
+        Alt + Copilot = Spracheingabe, Strg + Copilot = sachliche Anfrage (ohne Tier-Rolle),
+        Strg + Alt + Copilot = beides."""
         app = self.ctx.app
         if app is None or not self.enabled:
             return
         self.fired_count += 1
         action = self.action
-        if action == "ai_chat" or (alt and app.features.is_enabled("ai_chat")):
+        if action == "ai_chat" or ((alt or ctrl) and app.features.is_enabled("ai_chat")):
             chat = app.features.get("ai_chat")
             if chat is not None:
-                chat.open_input(voice=alt)
+                chat.open_input(voice=alt, serious=ctrl)
         elif action == "call":
             app.call_pet()
         elif action == "pause":

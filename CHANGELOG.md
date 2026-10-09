@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.9.4 – Sachliche Fragen ohne Tier-Rolle
+
+- **Sachliche Anfrage:** ohne „Du bist ein Pixeltier …“. Stattdessen ein neutraler Assistent: präzise, so ausführlich wie nötig, als reiner Text ohne Markdown.
+  - **Auslöser:**
+    - **Strg + Copilot**, mit Sprache **Strg + Alt + Copilot**.
+    - Alternativ `Strg + Alt + E` bzw. `Strg + Alt + Umschalt + E` (änderbar im Tab KI).
+    - Rechtsklick → „Sachliche Frage …“.
+    - Knopf **Sachlich** in der Eingabe-Blase.
+  - Statt Pfeil-hoch, weil ein Pfeil-Tastendruck zusätzlich an das gerade aktive Programm ginge (z. B. Cursor springt in Word).
+  - Eigener Verlauf, getrennt vom Plaudern mit dem Tier. Bei oneAI landen beide in getrennten Hub-Chats.
+  - Längere Antworten (bis ca. 1.800 Zeichen in der Blase, alles über „Kopieren“). Titel „<Name> · sachlich“.
+  - „Antworten“ bleibt sachlich (und bei Sprache auch bei Sprache).
+  - Eigene Zusatzanweisung möglich (Tab KI → „Sachliche Fragen“, z. B. „Antworte in Stichpunkten“).
+- Tab KI scrollt, damit der Dialog auch auf kleinen Bildschirmen passt.
+
+Tests: 203.
+
+- [ ] **Auf Windows prüfen:** Strg + Copilot → Blase „Sachliche Frage“, Antwort ohne Tier-Getue.
+- [ ] **Auf Windows prüfen:** Strg + Alt + Copilot → sachlich per Sprache.
+
 ## 0.9.3 – Spracheingabe ohne Fenster, „Antworten“ per Sprache
 
 - **Spracheingabe ohne Fenster** (Standard): Alt + Copilot nutzt jetzt die Windows-Spracherkennung direkt im Hintergrund, ohne das Win+H-Fenster.

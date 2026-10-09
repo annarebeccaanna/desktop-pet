@@ -122,12 +122,17 @@ class AITab(QWidget):
         self.cb_enabled = QCheckBox("KI-Chat einschalten", chat)
         self.cb_enabled.toggled.connect(self._on_enabled)
         cg.addWidget(self.cb_enabled, 0, 0, 1, 3)
-        self.cb_copilot = QCheckBox("Copilot-Taste öffnet den Chat  (Alt + Copilot: Spracheingabe)", chat)
+        self.cb_copilot = QCheckBox("Copilot-Taste öffnet den Chat  (Alt: Sprache · Strg: sachlich)", chat)
+        self.cb_copilot.setToolTip("Copilot = mit dem Tier plaudern\nAlt + Copilot = per Sprache\n"
+                                   "Strg + Copilot = sachliche Frage ohne Tier-Rolle\n"
+                                   "Strg + Alt + Copilot = sachlich per Sprache")
         self.cb_copilot.toggled.connect(self._on_copilot)
         self.cb_copilot.setEnabled(IS_WINDOWS)
         cg.addWidget(self.cb_copilot, 1, 0, 1, 3)
         self.hotkey_edits: dict[str, HotkeyEdit] = {}
-        for i, (name, label) in enumerate((("ai_chat", "Chat öffnen:"), ("ai_voice", "Mit Spracheingabe:"))):
+        for i, (name, label) in enumerate((("ai_chat", "Chat öffnen:"), ("ai_voice", "Mit Spracheingabe:"),
+                                           ("ai_serious", "Sachliche Frage:"),
+                                           ("ai_serious_voice", "Sachlich + Sprache:"))):
             cg.addWidget(QLabel(label, chat), 2 + i, 0)
             edit = HotkeyEdit(chat)
             edit.setFixedWidth(190)
@@ -137,7 +142,7 @@ class AITab(QWidget):
             change = QPushButton("Ändern …", chat)
             change.clicked.connect(edit.start)
             cg.addWidget(change, 2 + i, 2)
-        cg.addWidget(QLabel("Spracheingabe:", chat), 4, 0)
+        cg.addWidget(QLabel("Spracheingabe:", chat), 6, 0)
         self.combo_voice = QComboBox(chat)
         self.combo_voice.addItem("Ohne Fenster (Windows-Spracherkennung)", "silent")
         self.combo_voice.addItem("Mit Windows-Fenster (Win + H)", "winh")
@@ -145,14 +150,14 @@ class AITab(QWidget):
                                     "(Einstellungen → Datenschutz → Spracherkennung). Klappt das nicht,\n"
                                     "nimmt Desktop Pets automatisch Win + H.")
         self.combo_voice.currentIndexChanged.connect(self._on_voice_engine)
-        cg.addWidget(self.combo_voice, 4, 1, 1, 2)
+        cg.addWidget(self.combo_voice, 6, 1, 1, 2)
         cg.setColumnStretch(3, 1)
         note = QLabel("Gesendet wird nur, was du eintippst oder sagst – nie Fenstertitel oder Screenshots. "
                       "Der Chat wird nicht gespeichert und ist im Pause-Modus aus. Gesprochenes wandelt "
                       "Windows selbst in Text um.", chat)
         note.setObjectName("muted")
         note.setWordWrap(True)
-        cg.addWidget(note, 5, 0, 1, 4)
+        cg.addWidget(note, 7, 0, 1, 4)
         lay.addWidget(chat)
 
         # ---------- Persönlichkeit ----------
@@ -171,6 +176,15 @@ class AITab(QWidget):
         prow.addWidget(btn_default)
         pl.addLayout(prow)
         lay.addWidget(self.pers_box)
+
+        serious = QGroupBox("Sachliche Fragen (ohne Tier-Rolle)", self)
+        sl = QVBoxLayout(serious)
+        self.serious_extra = QLineEdit(serious)
+        self.serious_extra.setPlaceholderText("Optional: eigene Anweisung, z. B. „Antworte knapp in Stichpunkten.“")
+        self.serious_extra.editingFinished.connect(
+            lambda: None if self._building else self.settings.set("ai.serious_prompt", self.serious_extra.text()))
+        sl.addWidget(self.serious_extra)
+        lay.addWidget(serious)
         lay.addStretch(1)
         self.more.setVisible(False)
 
@@ -195,6 +209,7 @@ class AITab(QWidget):
                                        and self.settings.get("general.copilot_action") == "ai_chat")
             self.combo_voice.setCurrentIndex(max(0, self.combo_voice.findData(
                 self.settings.get("ai.voice_engine", "silent"))))
+            self.serious_extra.setText(self.settings.get("ai.serious_prompt") or "")
             self.pers_box.setTitle(f"Persönlichkeit von {self.app.pet_name}")
             self.personality.setPlainText(self.feature.personality() if self.feature else "")
         finally:

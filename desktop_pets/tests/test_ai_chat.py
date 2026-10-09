@@ -364,7 +364,7 @@ def test_copilot_action_opens_chat_and_alt_means_voice(pa, monkeypatch):
     pa.settings.set("ai.provider", "anthropic")
     pa.features.set_enabled("ai_chat", True)
     opened = []
-    monkeypatch.setattr(chat, "open_input", lambda voice=False: opened.append(voice))
+    monkeypatch.setattr(chat, "open_input", lambda voice=False, serious=False: opened.append(voice))
     cop = pa.features.get("copilot_key")
     pa.settings.set("general.copilot_key", True)
     pa.settings.set("general.copilot_action", "call")
@@ -453,7 +453,7 @@ def test_reply_keeps_voice_mode(pa, monkeypatch):
         chat.send("Hallo")
         wait_answer(chat)
         opened = []
-        monkeypatch.setattr(chat, "open_input", lambda voice=False, o=opened: o.append(voice))
+        monkeypatch.setattr(chat, "open_input", lambda voice=False, serious=False, o=opened: o.append(voice))
         reply = [b for b in pa.bubble.findChildren(QtWidgets.QPushButton) if b.text() == "Antworten"][-1]
         reply.click()
         assert opened == [voice]
@@ -500,7 +500,7 @@ def chat_input(monkeypatch):
     monkeypatch.setattr(ci_mod.ChatInput, "_start_winh", lambda self: (winh.append(1), setattr(self, "mode", "winh")))
     ci = ci_mod.ChatInput()
     sent = []
-    ci.submitted.connect(sent.append)
+    ci.submitted.connect(lambda text, serious: sent.append(text))
     ci.open("Frag Mieze", QPoint(500, 500), voice=True)
     yield ci, started, winh, sent
     ci.close_input()
@@ -563,3 +563,65 @@ def test_voice_engine_setting_is_respected(pa, monkeypatch):
     chat.open_input(voice=True)
     assert chat.input.mode == "winh"
     chat.input.close_input()
+
+
+# ---------- sachliche Anfragen ----------
+def test_serious_prompt_has_no_pet_role():
+    from desktop_pets.features.ai.chat import serious_prompt
+
+    s = serious_prompt()
+    assert "Pixeltier" not in s and "sachlich" in s
+    assert serious_prompt("Antworte in Stichpunkten.").endswith("Antworte in Stichpunkten.")
+
+
+def test_ctrl_copilot_is_reported():
+    m = ComboMatcher()
+    LWIN, LSHIFT, LCTRL = 0x5B, 0xA0, 0xA2
+    for vk in (LCTRL, LWIN, LSHIFT):
+        m.on_key(vk, True)
+    assert m.on_key(VK_F23, True) == (True, True) and m.ctrl and not m.alt
+
+
+def test_serious_request_uses_own_prompt_history_and_reply(pa, monkeypatch):
+    chat = pa.features.get("ai_chat")
+    chat.keys.set("anthropic", KEY)
+    pa.settings.set("ai.provider", "anthropic")
+    pa.features.set_enabled("ai_chat", True)
+    fake = _Instant(answer="Die Hauptstadt ist Canberra.")
+    chat.provider_factory = lambda *a, **k: fake
+    # Plaudern mit dem Tier
+    chat.send("Hallo Mieze", serious=False)
+    wait_answer(chat)
+    assert pa.pet_name in fake.seen[0]
+    # Strg + Copilot → sachlich
+    cop = pa.features.get("copilot_key")
+    pa.settings.set("general.copilot_key", True)
+    cop.trigger(alt=False, ctrl=True)
+    assert chat.input.serious and "SACHLICHE FRAGE" in chat.input.title.text()
+    chat.input.line.setText("Hauptstadt von Australien?")
+    chat.input.line.returnPressed.emit()
+    wait_answer(chat)
+    system, messages = fake.seen
+    assert "Pixeltier" not in system and [m.content for m in messages] == ["Hauptstadt von Australien?"]
+    assert "sachlich" in pa.bubble.title.text().lower() and "Canberra" in pa.bubble.text.text()
+    # „Antworten“ bleibt sachlich
+    opened = []
+    monkeypatch.setattr(chat, "open_input", lambda voice=False, serious=False: opened.append(serious))
+    [b for b in pa.bubble.findChildren(QtWidgets.QPushButton) if b.text() == "Antworten"][-1].click()
+    assert opened == [True]
+
+
+def test_serious_toggle_in_the_bubble(pa):
+    chat = pa.features.get("ai_chat")
+    chat.keys.set("anthropic", KEY)
+    pa.settings.set("ai.provider", "anthropic")
+    pa.features.set_enabled("ai_chat", True)
+    fake = _Instant()
+    chat.provider_factory = lambda *a, **k: fake
+    chat.open_input()
+    assert not chat.input.serious
+    chat.input.btn_serious.click()
+    chat.input.line.setText("Was ist 2+2?")
+    chat.input.line.returnPressed.emit()
+    wait_answer(chat)
+    assert "Pixeltier" not in fake.seen[0]

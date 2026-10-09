@@ -44,6 +44,8 @@ DEFAULTS: dict[str, Any] = {
         "pomodoro": "Ctrl+Alt+T",
         "ai_chat": "Ctrl+Alt+K",          # KI-Chat öffnen (Alternative zur Copilot-Taste)
         "ai_voice": "Ctrl+Alt+Shift+K",   # KI-Chat mit Spracheingabe (wie Alt + Copilot)
+        "ai_serious": "Ctrl+Alt+E",       # sachliche Anfrage ohne Tier-Rolle (wie Strg + Copilot)
+        "ai_serious_voice": "Ctrl+Alt+Shift+E",  # dasselbe mit Spracheingabe (Strg + Alt + Copilot)
     },
     "general": {
         "autostart": False,
@@ -60,6 +62,7 @@ DEFAULTS: dict[str, Any] = {
         "base_urls": {},      # Anbieter -> Basis-URL (OneAI, eigener Endpunkt)
         "personality": {},    # pet_id -> eigener Persönlichkeits-Text
         "voice_engine": "silent",  # Spracheingabe: "silent" (ohne Fenster) oder "winh" (Win + H)
+        "serious_prompt": "",      # eigene Zusatzanweisungen für sachliche Anfragen
     },
     "theme": "retro_xp",
     "bed": {

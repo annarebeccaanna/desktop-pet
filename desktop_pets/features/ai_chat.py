@@ -2,6 +2,9 @@
 
 * Öffnen: Copilot-Taste (Aktion „KI-Chat öffnen“) oder ``Strg + Alt + K``.
   Spracheingabe: Alt + Copilot oder ``Strg + Alt + Umschalt + K``.
+* Sachliche Anfrage (ohne Tier-Rolle, ausführlichere Antworten): Strg + Copilot oder
+  ``Strg + Alt + E`` (mit Sprache: Strg + Alt + Copilot / ``Strg + Alt + Umschalt + E``).
+  Eigener Verlauf, getrennt vom Plaudern mit dem Tier.
 * Eine Eingabe-Sprechblase geht vom Tier aus; die Antwort kommt als Sprechblase.
 * Anbieter, Key, Modell und Persönlichkeit: Einstellungen → Tab „KI“.
 * Datenschutz: Es geht nur der Chattext hinaus (nie Fenstertitel, nie Screenshots).
@@ -20,7 +23,7 @@ from PySide6.QtCore import QObject, Signal
 from ..core.log import get_logger
 from ..core.modes import Mode
 from ..pet.brain import State
-from .ai.chat import Conversation, system_prompt
+from .ai.chat import Conversation, serious_prompt, system_prompt
 from .ai.keys import KeyStore
 from .ai.providers import KEY_OPTIONAL, PROVIDERS, AIError, make_provider
 from .base import Feature, MenuAction, register
@@ -31,6 +34,7 @@ if TYPE_CHECKING:  # pragma: no cover
 log = get_logger("ai_chat")
 
 MAX_SHOWN = 700          # Zeichen in der Sprechblase; alles über „Kopieren“
+MAX_SHOWN_SERIOUS = 1800  # sachliche Antworten dürfen länger sein
 
 
 class _Bridge(QObject):
@@ -54,10 +58,13 @@ class AIChat(Feature):
         super().__init__(ctx)
         self.keys = KeyStore()
         self.conversation = Conversation()
+        self.serious_conversation = Conversation()   # sachliche Anfragen: eigener Verlauf
         self.input: ChatInput | None = None
         self.provider_factory = make_provider        # in Tests ersetzbar
         self.busy = False
         self.voice_mode = False
+        self.serious_mode = False
+        self._request_serious = False
         self._request = 0
         self._last_answer = ""
         self._bridge = _Bridge()
@@ -111,7 +118,7 @@ class AIChat(Feature):
             from ..ui.chat_input import ChatInput
 
             self.input = ChatInput()
-            self.input.submitted.connect(self.send)
+            self.input.submitted.connect(self.send)            # (Text, sachlich?)
         return self.input
 
     @property
@@ -135,26 +142,36 @@ class AIChat(Feature):
 
     def hotkeys(self) -> list:
         return [("ai_chat", lambda: self.open_input(voice=False)),
-                ("ai_voice", lambda: self.open_input(voice=True))]
+                ("ai_voice", lambda: self.open_input(voice=True)),
+                ("ai_serious", lambda: self.open_input(voice=False, serious=True)),
+                ("ai_serious_voice", lambda: self.open_input(voice=True, serious=True))]
 
     def menu_actions(self, where: str) -> list[MenuAction]:
         if where not in ("tray", "pet") or self.ctx.modes.paused:
             return []
         return [MenuAction("Mit dem Tier chatten …", lambda: self.open_input(voice=False), order=48,
-                           shortcut=self._shortcut())]
+                           shortcut=self._shortcut("ai_chat")),
+                MenuAction("Sachliche Frage …", lambda: self.open_input(voice=False, serious=True), order=49,
+                           shortcut=self._shortcut("ai_serious"))]
 
-    def _shortcut(self) -> str:
+    def _shortcut(self, name: str) -> str:
         from ..win import hotkeys as hk
 
         try:
-            return hk.format_hotkey(self.ctx.settings.get("hotkeys.ai_chat") or "")
+            return hk.format_hotkey(self.ctx.settings.get(f"hotkeys.{name}") or "")
         except hk.HotkeyError:
             return ""
+
+    def system_for(self, serious: bool) -> str:
+        app = self.ctx.app
+        if serious:
+            return serious_prompt(self.ctx.settings.get("ai.serious_prompt") or "")
+        return system_prompt(app.pet_name if app else "", self.personality())
 
     # ------------------------------------------------------------------ #
     # Chat
     # ------------------------------------------------------------------ #
-    def open_input(self, voice: bool = False) -> None:
+    def open_input(self, voice: bool = False, serious: bool = False) -> None:
         app = self.ctx.app
         if app is None:
             return
@@ -180,11 +197,12 @@ class AIChat(Feature):
         app.brain.target_x = None
         app.brain.set_state(State.SIT, 60)       # hinsetzen und zuhören
         self.voice_mode = voice                 # „Antworten“ bleibt dann auch bei der Spracheingabe
+        self.serious_mode = serious             # … und sachlich bzw. verspielt
         silent = self.ctx.settings.get("ai.voice_engine", "silent") != "winh"
         self._ensure_input().open(f"Frag {app.pet_name}", app.pet_window.head_anchor(), voice=voice,
-                                  silent=silent)
+                                  silent=silent, serious=serious)
 
-    def send(self, text: str) -> None:
+    def send(self, text: str, serious: bool | None = None) -> None:
         app = self.ctx.app
         if app is None or not self.active or not text.strip():
             return
@@ -194,14 +212,19 @@ class AIChat(Feature):
         except AIError as exc:
             self._show_error(str(exc))
             return
-        messages = self.conversation.prepare(text.strip(), time.monotonic())
-        system = system_prompt(app.pet_name, self.personality())
+        serious = self.serious_mode if serious is None else serious
+        self.serious_mode = serious
+        conversation = self.serious_conversation if serious else self.conversation
+        messages = conversation.prepare(text.strip(), time.monotonic())
+        system = self.system_for(serious)
+        self._request_serious = serious
         self._request += 1
         number = self._request
         self.busy = True
         app.brain.set_state(State.SIT, 90)
-        app.say(app.pet_name, "Hmm … ich überlege.", 0)
-        log.info("Anfrage an %s (%s), %d Zeichen", pid, provider.model, len(text))
+        app.say(app.pet_name, "Moment, ich schaue nach …" if serious else "Hmm … ich überlege.", 0)
+        log.info("Anfrage an %s (%s), %d Zeichen%s", pid, provider.model, len(text),
+                 ", sachlich" if serious else "")
 
         def work() -> None:
             try:
@@ -222,17 +245,21 @@ class AIChat(Feature):
         app = self.ctx.app
         if app is None or not self.active:
             return
+        serious = self._request_serious
+        conversation = self.serious_conversation if serious else self.conversation
         if error:
-            self.conversation.failed()
+            conversation.failed()
             self._show_error(error)
             return
         answer = (answer or "").strip() or "…"
-        self.conversation.answered(answer)
+        conversation.answered(answer)
         self._last_answer = answer
-        shown = answer if len(answer) <= MAX_SHOWN else answer[:MAX_SHOWN].rstrip() + " … (Kopieren für alles)"
+        limit = MAX_SHOWN_SERIOUS if serious else MAX_SHOWN
+        shown = answer if len(answer) <= limit else answer[:limit].rstrip() + " … (Kopieren für alles)"
         app.brain.set_state(State.SIT, 8)
-        app.say(app.pet_name, shown, min(90.0, 10 + len(shown) / 15), wide=True, buttons=[
-            ("Antworten", lambda: self.open_input(voice=self.voice_mode), True),
+        title = f"{app.pet_name} · sachlich" if serious else app.pet_name
+        app.say(title, shown, min(180.0, 10 + len(shown) / 15), wide=True, buttons=[
+            ("Antworten", lambda: self.open_input(voice=self.voice_mode, serious=serious), True),
             ("Kopieren", self.copy_answer, False),
         ])
         app.sound.play(app.pack.sounds.get("call"), app.pack.path)
@@ -251,3 +278,4 @@ class AIChat(Feature):
 
     def forget(self) -> None:
         self.conversation.reset()
+        self.serious_conversation.reset()

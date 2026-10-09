@@ -30,6 +30,8 @@ Das Tier erscheint unten rechts über der Taskleiste, das Tray-Icon zeigt seinen
 | Pomodoro starten/stoppen | `Strg + Alt + T` (wenn Pomodoro eingeschaltet ist) |
 | KI-Chat öffnen | `Strg + Alt + K` oder Copilot-Taste |
 | KI-Chat mit Spracheingabe | `Strg + Alt + Umschalt + K` oder Alt + Copilot-Taste |
+| Sachliche Frage (ohne Tier-Rolle) | `Strg + Alt + E` oder Strg + Copilot-Taste |
+| Sachliche Frage per Sprache | `Strg + Alt + Umschalt + E` oder Strg + Alt + Copilot-Taste |
 
 Alle Tastenkürzel lassen sich im Einstellungsdialog ändern.
 

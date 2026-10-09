@@ -52,7 +52,7 @@ SPEECH_HINTS = {
 
 
 class ChatInput(QWidget):
-    submitted = Signal(str)
+    submitted = Signal(str, bool)     # Text, sachlich?
     closed = Signal()
     _heard_partial = Signal(str)      # aus dem Spracherkennungs-Thread
     _heard_final = Signal(str)
@@ -65,6 +65,8 @@ class ChatInput(QWidget):
         self.setWindowTitle("Desktop Pets – KI-Chat")
         self._tail_local: QPoint | None = None
         self.voice = False
+        self.serious = False
+        self._title = ""
         self.mode = ""                # "silent" (ohne Fenster), "winh" oder "" (tippen)
         self._waited = 0.0
         self._heard_partial.connect(self._on_partial)
@@ -103,6 +105,18 @@ class ChatInput(QWidget):
         self.btn_mic.clicked.connect(self._listen_again)
         row.addWidget(self.btn_mic)
         outer.addLayout(row)
+        mode_row = QHBoxLayout()
+        mode_row.setSpacing(6)
+        self.btn_serious = QPushButton("Sachlich", self)
+        self.btn_serious.setCheckable(True)
+        self.btn_serious.setFocusPolicy(Qt.NoFocus)
+        self.btn_serious.setToolTip("Sachliche Anfrage: ohne Tier-Rolle, ausführlichere Antwort\n"
+                                    "(Strg + Copilot oder Strg + Alt + E)")
+        self.btn_serious.setStyleSheet("QPushButton:checked { background: #FCE7B2; border: 1px solid #F8B33A;"
+                                       " font-weight: bold; }")
+        self.btn_serious.toggled.connect(self._set_serious)
+        mode_row.addWidget(self.btn_serious)
+        mode_row.addStretch(1)
         self.hint = QLabel("", self)
         self.hint.setObjectName("muted")
         self.hint.setFont(t.ui_font(8))
@@ -110,6 +124,7 @@ class ChatInput(QWidget):
         self.hint.setWordWrap(True)
         self.hint.setMaximumWidth(300)
         outer.addWidget(self.hint)
+        outer.addLayout(mode_row)
 
         self._send_timer = QTimer(self)
         self._send_timer.setSingleShot(True)
@@ -119,12 +134,17 @@ class ChatInput(QWidget):
         self._keys_timer.timeout.connect(self._wait_for_keys)
 
     # ---------- öffentlich ----------
-    def open(self, title: str, anchor: QPoint, voice: bool = False, silent: bool = True) -> None:
+    def open(self, title: str, anchor: QPoint, voice: bool = False, silent: bool = True,
+             serious: bool = False) -> None:
         self.dictation.cancel()
+        self._title = title
+        self.btn_serious.blockSignals(True)
+        self.btn_serious.setChecked(serious)
+        self.btn_serious.blockSignals(False)
+        self._set_serious(serious)
         self.voice = voice and win_input.voice_supported()
         self.mode = ("silent" if silent and speech.available() else "winh") if self.voice else ""
         self.btn_mic.setVisible(self.voice)
-        self.title.setText(title.upper())
         self.line.clear()
         if self.voice:
             self.line.setPlaceholderText("Ich höre zu … sprich jetzt")
@@ -162,6 +182,12 @@ class ChatInput(QWidget):
             self.closed.emit()
 
     # ---------- intern ----------
+    def _set_serious(self, on: bool) -> None:
+        self.serious = on
+        self.btn_serious.setText("✓ Sachlich" if on else "Sachlich")
+        self.title.setText(("Sachliche Frage" if on else getattr(self, "_title", "")).upper())
+        self.update()
+
     def _start_winh(self) -> None:
         self.mode = "winh"
         self._waited = 0.0
@@ -223,7 +249,7 @@ class ChatInput(QWidget):
         if not text:
             return
         self.close_input()
-        self.submitted.emit(text)
+        self.submitted.emit(text, self.serious)
 
     def paintEvent(self, _e) -> None:  # noqa: N802
         t = theme_mod.current()

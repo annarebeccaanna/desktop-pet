@@ -348,7 +348,11 @@ class SettingsDialog(RetroWindow):
         from .ai_tab import AITab
 
         self.ai_tab = AITab(app)
-        self.tabs.addTab(self.ai_tab, "KI")
+        ai_scroll = QScrollArea()
+        ai_scroll.setWidgetResizable(True)
+        ai_scroll.setFrameShape(QFrame.NoFrame)
+        ai_scroll.setWidget(self.ai_tab)
+        self.tabs.addTab(ai_scroll, "KI")
         self.tabs.addTab(self._build_general_tab(), "Allgemein")
         self.tabs.currentChanged.connect(lambda _i: self._update_status())
         lay.addWidget(self.tabs, 1)

@@ -13,6 +13,7 @@ Codeänderung anpassen. Die Basis-URL ist im Tab KI unter „Erweitert“ änder
 from __future__ import annotations
 
 import datetime
+import hashlib
 import json
 from pathlib import Path
 
@@ -138,7 +139,8 @@ class OneAIProvider(AIProvider):
                 raise AIError("oneAI: keine Modelle freigeschaltet.")
             self.model = str(models[0]["id"])
         info = next((m for m in models if m.get("id") == self.model), None)
-        slot = (self.hub, self.api_key[-6:])
+        # Eigener Hub-Chat je Rolle (Tier-Plauderei bzw. sachliche Anfragen)
+        slot = (self.hub, self.api_key[-6:], hashlib.sha1(system.encode("utf-8")).hexdigest()[:8])
         fresh = len([m for m in messages if m.role == "user"]) == 1 or slot not in _CHATS
         text = last
         if fresh:
