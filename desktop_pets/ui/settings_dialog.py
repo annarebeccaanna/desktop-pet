@@ -809,7 +809,7 @@ class SettingsDialog(RetroWindow):
             self._building = True
             try:
                 self.cb_copilot.setChecked(bool(self.settings.get("general.copilot_key")))
-                idx = self.combo_copilot.findData(self.settings.get("general.copilot_action", "settings"))
+                idx = self.combo_copilot.findData(self.settings.get("general.copilot_action", "ai_chat"))
                 self.combo_copilot.setCurrentIndex(max(0, idx))
                 self._refresh_copilot_status()
             finally:
@@ -1103,7 +1103,7 @@ class SettingsDialog(RetroWindow):
 
     def _refresh_general_tab(self) -> None:
         self.cb_copilot.setChecked(bool(self.settings.get("general.copilot_key")))
-        idx = self.combo_copilot.findData(self.settings.get("general.copilot_action", "settings"))
+        idx = self.combo_copilot.findData(self.settings.get("general.copilot_action", "ai_chat"))
         self.combo_copilot.setCurrentIndex(max(0, idx))
         self._refresh_copilot_status()
         self.cb_autostart.setChecked(autostart.is_enabled() if autostart.is_supported()

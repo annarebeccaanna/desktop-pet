@@ -19,7 +19,7 @@ from .log import get_logger
 
 log = get_logger("settings")
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 DEFAULTS: dict[str, Any] = {
     "version": SCHEMA_VERSION,
@@ -51,7 +51,7 @@ DEFAULTS: dict[str, Any] = {
         "pet_sounds": True,       # Tier macht Geräusche (Miau, Schnurren, Bellen …)
         "notice_sounds": True,    # Hinweistöne (z. B. Pomodoro-„Pling“)
         "copilot_key": False,     # Copilot-Taste (Win + Umschalt + F23) für Desktop Pets nutzen
-        "copilot_action": "settings",
+        "copilot_action": "ai_chat",
         "language": "de",
     },
     "ai": {
@@ -118,8 +118,17 @@ def _migrate_4_to_5(data: dict) -> dict:
     return data
 
 
+def _migrate_5_to_6(data: dict) -> dict:
+    # „Einstellungen öffnen“ per Copilot-Taste war nur zum Testen – die Taste öffnet jetzt den KI-Chat.
+    general = data.get("general", {})
+    if general.get("copilot_action") == "settings":
+        general["copilot_action"] = "ai_chat"
+    data.get("ai", {}).pop("copilot_switched", None)
+    return data
+
+
 MIGRATIONS: dict[int, Callable[[dict], dict]] = {
-    1: _migrate_1_to_2, 2: _migrate_2_to_3, 3: _migrate_3_to_4, 4: _migrate_4_to_5,
+    1: _migrate_1_to_2, 2: _migrate_2_to_3, 3: _migrate_3_to_4, 4: _migrate_4_to_5, 5: _migrate_5_to_6,
 }
 
 

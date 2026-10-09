@@ -323,10 +323,10 @@ class AITab(QWidget):
         if self._building:
             return
         if on:
-            self.settings.set("general.copilot_key", True)
             self.settings.set("general.copilot_action", "ai_chat")
+            self.settings.set("general.copilot_key", True)
         elif self.settings.get("general.copilot_action") == "ai_chat":
-            self.settings.set("general.copilot_action", "settings")
+            self.settings.set("general.copilot_key", False)      # Taste gehört wieder Windows
 
     def _on_personality(self) -> None:
         if not self._building:

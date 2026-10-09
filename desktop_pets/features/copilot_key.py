@@ -1,7 +1,7 @@
-"""Copilot-Taste für Desktop Pets nutzen (Einstellungen → Allgemein, ab Werk aus).
+"""Copilot-Taste für Desktop Pets nutzen (Einstellungen → KI oder Allgemein, ab Werk aus).
 
 Solange das Häkchen gesetzt ist, öffnet die Copilot-Taste (Win + Umschalt + F23)
-nicht Copilot, sondern führt die gewählte Aktion aus. Häkchen raus oder App
+nicht Copilot, sondern führt die gewählte Aktion aus (Standard: KI-Chat). Häkchen raus oder App
 beendet → die Taste gehört wieder Windows.
 """
 
@@ -15,7 +15,6 @@ from .base import Feature, register
 # Wert → Anzeige
 ACTIONS = [
     ("ai_chat", "KI-Chat öffnen"),
-    ("settings", "Einstellungen öffnen"),
     ("call", "Tier zu mir rufen"),
     ("pause", "Pause-Modus umschalten"),
 ]
@@ -47,8 +46,8 @@ class CopilotKey(Feature):
 
     @property
     def action(self) -> str:
-        value = self.ctx.settings.get("general.copilot_action", "settings")
-        return value if value in dict(ACTIONS) else "settings"
+        value = self.ctx.settings.get("general.copilot_action", "ai_chat")
+        return value if value in dict(ACTIONS) else "ai_chat"
 
     @property
     def status(self) -> str:
@@ -77,8 +76,6 @@ class CopilotKey(Feature):
             chat = app.features.get("ai_chat")
             if chat is not None:
                 chat.open_input(voice=alt)
-        elif action == "settings":
-            app.open_settings()
         elif action == "call":
             app.call_pet()
         elif action == "pause":

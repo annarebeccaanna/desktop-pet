@@ -290,7 +290,7 @@ def test_copilot_action_opens_chat_and_alt_means_voice(pa, monkeypatch):
     monkeypatch.setattr(chat, "open_input", lambda voice=False: opened.append(voice))
     cop = pa.features.get("copilot_key")
     pa.settings.set("general.copilot_key", True)
-    pa.settings.set("general.copilot_action", "settings")
+    pa.settings.set("general.copilot_action", "call")
     cop.trigger(alt=True)                     # Alt + Copilot → Spracheingabe, egal welche Aktion
     pa.settings.set("general.copilot_action", "ai_chat")
     cop.trigger(alt=False)
@@ -347,19 +347,11 @@ def test_personality_is_editable_per_pet(pa):
     assert chat.personality() == "Du bist sehr höflich."
 
 
-def test_enabling_chat_moves_copilot_key_to_chat_once(pa):
-    chat = pa.features.get("ai_chat")
-    pa.settings.set("general.copilot_key", True)
-    assert pa.settings.get("general.copilot_action") == "settings"
-    chat.keys.set("anthropic", KEY)
-    pa.settings.set("ai.provider", "anthropic")
-    pa.features.set_enabled("ai_chat", True)
-    assert pa.settings.get("general.copilot_action") == "ai_chat"
-    # wer danach bewusst etwas anderes wählt, behält das
-    pa.settings.set("general.copilot_action", "settings")
-    pa.features.set_enabled("ai_chat", False)
-    pa.features.set_enabled("ai_chat", True)
-    assert pa.settings.get("general.copilot_action") == "settings"
+def test_old_settings_action_is_migrated_to_chat():
+    from desktop_pets.core.settings import migrate
+
+    data = migrate({"version": 5, "general": {"copilot_key": True, "copilot_action": "settings"}})
+    assert data["general"]["copilot_action"] == "ai_chat"
 
 
 def test_copilot_settings_stay_in_sync_between_tabs(pa):
