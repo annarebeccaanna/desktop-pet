@@ -141,3 +141,32 @@ def test_copilot_action_dictate(pa, dic):
     pa.settings.set("general.copilot_action", "dictate")
     cop.trigger()
     assert d.listening and started == [1]
+
+
+# ---------- gesprochene Satzzeichen ----------
+@pytest.mark.parametrize("spoken, written", [
+    ("hallo zusammen komma wie geht es euch fragezeichen", "Hallo zusammen, wie geht es euch?"),
+    ("das ist der springende Punkt Punkt neue Zeile viele Grüße", "Das ist der springende Punkt.\nViele Grüße"),
+    ("Termin am Montag Doppelpunkt zehn Uhr Punkt neuer Absatz danke Ausrufezeichen",
+     "Termin am Montag: zehn Uhr.\n\nDanke!"),
+    ("Kommandant Pünktlich", "Kommandant Pünktlich"),
+    ("ich komme Klammer auf vielleicht Klammer zu später Punkt", "Ich komme (vielleicht) später."),
+    ("e Bindestrich Mail", "E-Mail"),
+    ("Hallo, wie geht's? Gut.", "Hallo, wie geht's? Gut."),
+])
+def test_spoken_punctuation(spoken, written):
+    from desktop_pets.features.punctuation import apply
+
+    assert apply(spoken) == written
+
+
+def test_dictation_applies_punctuation_and_can_switch_it_off(pa, dic):
+    d, started, pasted = dic
+    d.focus_info = lambda: FocusInfo()
+    d.toggle()
+    d._bridge.final.emit("bis morgen Punkt")
+    assert clipboard().text() == "Bis morgen."
+    pa.settings.set_feature_option("dictation", "punctuation", False)
+    d.toggle()
+    d._bridge.final.emit("bis morgen Punkt")
+    assert clipboard().text() == "bis morgen Punkt"

@@ -18,7 +18,8 @@ from ..core.log import get_logger
 from ..pet.brain import State
 from ..win import input as win_input
 from ..win import speech, textinsert
-from .base import Feature, MenuAction, register
+from . import punctuation
+from .base import Feature, MenuAction, Option, register
 
 log = get_logger("dictation")
 
@@ -51,6 +52,9 @@ class Dictation(Feature):
     allowed_in_pause = True          # auch im Termin nutzbar – dann ohne Sprechblase
     pause_label = "still"
     order = 15
+    options = [
+        Option("punctuation", "Gesprochene Satzzeichen („Punkt“, „Komma“, „neue Zeile“ …)", True, kind="bool"),
+    ]
 
     def __init__(self, ctx) -> None:
         super().__init__(ctx)
@@ -119,12 +123,16 @@ class Dictation(Feature):
     # ---------- Rückmeldungen der Spracherkennung ----------
     def _on_partial(self, text: str) -> None:
         if self.listening:
+            if self.option("punctuation"):
+                text = punctuation.apply(text)
             self._say(f"🎤 {text} …", 0)
 
     def _on_final(self, text: str) -> None:
         if not self.listening:
             return
         self.listening = False
+        if self.option("punctuation"):
+            text = punctuation.apply(text)
         self._wait_for_keys(text, WAIT_KEYS_MS)
 
     def _on_error(self, reason: str) -> None:
