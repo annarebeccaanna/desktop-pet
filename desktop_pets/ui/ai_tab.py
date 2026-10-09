@@ -40,6 +40,7 @@ class AITab(QWidget):
         self.settings = app.settings
         self._building = False
         self._test_no = 0
+        self._found: tuple | None = None
         self._bridge = _TestBridge()
         self._bridge.done.connect(self._on_test_done)
 
@@ -357,7 +358,9 @@ class AITab(QWidget):
 
         def work() -> None:
             try:
-                self._bridge.done.emit(number, True, provider.test_connection())
+                message = provider.test_connection()
+                self._found = (pid, list(getattr(provider, "models_found", []) or []), provider.model)
+                self._bridge.done.emit(number, True, message)
             except AIError as exc:
                 self._bridge.done.emit(number, False, str(exc))
             except Exception as exc:  # noqa: BLE001
@@ -370,4 +373,17 @@ class AITab(QWidget):
             return
         self.test_result.setText(text)
         self.test_result.setStyleSheet("color: #1E7B1E;" if ok else "color: #B00020;")
+        found = self._found
+        self._found = None
+        if ok and found and found[0] == self._selected() and found[1]:
+            # Modelle, die der Anbieter tatsächlich anbietet, in die Auswahl übernehmen
+            pid, names, model = found
+            current = self.model.currentText().strip() or model
+            self.model.blockSignals(True)
+            self.model.clear()
+            self.model.addItems(names)
+            self.model.setEditText(current)
+            self.model.blockSignals(False)
+            if not self.settings.get(f"ai.models.{pid}") and current:
+                self.settings.set(f"ai.models.{pid}", current)
         self._update_state()

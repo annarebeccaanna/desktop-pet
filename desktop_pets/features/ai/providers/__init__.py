@@ -7,6 +7,7 @@ from typing import Callable
 from . import anthropic, custom, gemini, groq, mistral, oneai, openai, openrouter, xai
 from .anthropic import AnthropicProvider
 from .base import AIError, AIProvider, Message, ProviderInfo
+from .oneai import OneAIProvider
 from .openai_compat import OpenAICompatProvider
 
 PROVIDERS: dict[str, ProviderInfo] = {
@@ -22,7 +23,7 @@ def make_provider(provider_id: str, api_key: str, model: str = "", base_url: str
     info = PROVIDERS.get(provider_id)
     if info is None:
         raise AIError(f"Unbekannter Anbieter: {provider_id}")
-    cls = AnthropicProvider if info.kind == "anthropic" else OpenAICompatProvider
+    cls = {"anthropic": AnthropicProvider, "oneai": OneAIProvider}.get(info.kind, OpenAICompatProvider)
     return cls(info, api_key, model=model, base_url=base_url, transport=transport)
 
 

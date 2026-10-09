@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.9.2 – oneAI richtig angebunden, Copilot-Taste ohne „Einstellungen öffnen“
+
+- **Copilot-Taste:** Die Aktion „Einstellungen öffnen“ ist entfernt – sie war nur zum Testen. Standard ist „KI-Chat öffnen“, alte Einstellungen werden umgestellt (Migration v6). Häkchen im Tab KI entfernen → die Taste gehört wieder Windows.
+- **oneAI (oneai.eu):** Bisher wurde OneAI als OpenAI-kompatibler Endpunkt direkt unter der Basis-URL angesprochen (`<URL>/models`, `<URL>/chat/completions`). Das gibt es bei oneAI so nicht, darum schlug der Verbindungstest fehl. Jetzt:
+  - Basis-URL ist die Hub-Adresse, Standard `https://hub.oneai.eu` (eigene Instanz unter „Erweitert“). Eingefügte Gateway-Adressen werden automatisch gekürzt.
+  - Keys `oai-gk_…` (Gateway-Tarif) → OpenAI-kompatibel unter `<Hub>/api/openai/v1`.
+  - Keys `oai_…` (Hub) → Chat-Schnittstelle des Hubs: persönliches Projekt abfragen, Chat „Desktop Pets <Datum>“ anlegen, Nachrichten schicken. Der Verlauf liegt im Hub, ein neues Gespräch legt einen neuen Chat an. Der Hub kennt keinen Systemtext, deshalb steht die Persönlichkeit vor der ersten Nachricht.
+  - Beide Key-Arten werden automatisch als OneAI erkannt.
+  - „Verbindung testen“ füllt die Modellauswahl mit den Modellen, die im Hub freigeschaltet sind. Ohne gewähltes Modell nimmt der Chat das erste.
+- Fehlermeldungen bei falscher Adresse nennen jetzt die aufgerufene URL (nie den Key).
+
+Tests: 191 (neu: oneAI-Gateway und -Hub mit nachgebautem Hub, Adress-Normalisierung, Migration der Copilot-Aktion).
+
+- [ ] **Auf Windows prüfen:** oneAI-Key einfügen → „Erkannt: OneAI“, „Verbindung testen“ grün, Modelle erscheinen in der Auswahl.
+- [ ] **Auf Windows prüfen:** Frage über die Copilot-Taste → Antwort kommt; im oneAI-Hub erscheint der Chat „Desktop Pets …“.
+
 ## 0.9.1 – Copilot-Taste öffnet den Chat
 
 - **Behoben:** Die Copilot-Taste öffnete nach dem Einrichten des KI-Chats weiter die Einstellungen, weil die gespeicherte Aktion noch „Einstellungen öffnen“ war. Beim ersten Einschalten des KI-Chats wechselt die Aktion jetzt automatisch auf „KI-Chat öffnen“. Wer danach bewusst etwas anderes wählt, behält das.

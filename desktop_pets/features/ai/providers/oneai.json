@@ -1,10 +1,12 @@
 {
-  "_hinweis": "OneAI-Zugang: Basis-URL, Anmeldung und Modelle hier eintragen (ohne Codeänderung). Bis die Angaben vorliegen, wird OneAI als OpenAI-kompatibler Endpunkt behandelt; die Basis-URL lässt sich auch im Tab KI unter Erweitert eintragen.",
+  "_hinweis": "oneAI (oneai.eu). Basis-URL = Adresse des Hubs (eigene Instanz im Tab KI unter Erweitert). Keys mit oai-gk_ laufen über das OpenAI-kompatible Gateway (/api/openai/v1), alle anderen (oai_) über die Chat-Schnittstelle des Hubs (/api/chats).",
   "name": "OneAI",
-  "base_url": "",
+  "base_url": "https://hub.oneai.eu",
   "auth_header": "Authorization",
   "auth_scheme": "Bearer ",
   "default_model": "",
   "models": [],
-  "prefixes": []
+  "prefixes": ["oai-gk_", "oai_"],
+  "gateway_prefix": "oai-gk_",
+  "gateway_path": "/api/openai/v1"
 }

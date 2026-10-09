@@ -99,7 +99,7 @@ Unter Einstellungen → **KI** einen API-Key einfügen (ChatGPT, Claude, OneAI, 
 
 Dann öffnet die Copilot-Taste (Häkchen „Copilot-Taste öffnet den Chat“) oder `Strg + Alt + K` eine Sprechblase am Tier: Frage eintippen, Enter – die Antwort kommt als Sprechblase. **Alt + Copilot** (oder `Strg + Alt + Umschalt + K`) startet zusätzlich die Windows-Spracheingabe; sobald man aufhört zu sprechen, geht die Frage ab.
 
-OneAI: Basis-URL im Tab KI unter „Erweitert“ eintragen oder fest in `desktop_pets/features/ai/providers/oneai.json`.
+oneAI: Key aus den Hub-Einstellungen einfügen (`oai_…` oder `oai-gk_…`), fertig – Standard-Adresse ist `https://hub.oneai.eu`. Eine eigene Instanz kommt im Tab KI unter „Erweitert“ oder fest in `desktop_pets/features/ai/providers/oneai.json`.
 
 ## Daten & Datenschutz
 

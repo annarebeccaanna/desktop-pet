@@ -29,13 +29,16 @@ def _http(method: str, url: str, headers: dict[str, str], body: dict | None) -> 
         raise AIError(f"Keine Verbindung zu {url.split('/')[2] if '//' in url else url} ({exc}).") from None
 
 
-def _error_text(status: int, payload: dict) -> str:
+def _error_text(status: int, payload: dict, url: str = "") -> str:
     err = payload.get("error") if isinstance(payload, dict) else None
     detail = err.get("message") if isinstance(err, dict) else (err if isinstance(err, str) else "")
+    if not detail and isinstance(payload, dict):
+        detail = str(payload.get("message") or payload.get("detail") or "")
     if status in (401, 403):
         return "Der API-Key wurde abgelehnt. Bitte prüfen."
     if status == 404:
-        return f"Modell oder Adresse nicht gefunden. {detail}".strip()
+        where = f" ({url})" if url else ""
+        return f"Adresse oder Modell nicht gefunden{where}. Basis-URL und Modell prüfen. {detail}".strip()
     if status == 429:
         return "Zu viele Anfragen oder Guthaben aufgebraucht – bitte später noch einmal."
     if status >= 500:
@@ -44,6 +47,8 @@ def _error_text(status: int, payload: dict) -> str:
 
 
 class OpenAICompatProvider(AIProvider):
+    models_found: list[str] = []          # nach „Verbindung testen“: was der Anbieter anbietet
+
     def _headers(self) -> dict[str, str]:
         if not self.api_key:
             return {}
@@ -53,12 +58,23 @@ class OpenAICompatProvider(AIProvider):
         if not self.base_url:
             raise AIError("Bitte unter „Erweitert“ eine Basis-URL eintragen.")
         http = self.transport or _http
-        status, payload = http(method, f"{self.base_url}{path}", self._headers(), body)
+        url = f"{self.base_url}{path}"
+        status, payload = http(method, url, self._headers(), body)
         if status >= 400:
-            raise AIError(self.scrub(_error_text(status, payload)))
-        return payload
+            raise AIError(self.scrub(_error_text(status, payload, url)))
+        return payload if isinstance(payload, (dict, list)) else {}
+
+    def list_models(self) -> list[str]:
+        payload = self._call("GET", "/models")
+        data = payload.get("data", []) if isinstance(payload, dict) else payload
+        return [m.get("id", "") for m in data if isinstance(m, dict) and m.get("id")]
 
     def chat(self, system: str, messages: list[Message]) -> str:
+        if not self.model:
+            found = self.list_models()
+            if not found:
+                raise AIError("Bitte unter „Erweitert“ ein Modell eintragen.")
+            self.model = found[0]
         body = {
             "model": self.model,
             "messages": [{"role": "system", "content": system}]
@@ -72,8 +88,10 @@ class OpenAICompatProvider(AIProvider):
         return text.strip()
 
     def test_connection(self) -> str:
-        payload = self._call("GET", "/models")
-        names = [m.get("id", "") for m in payload.get("data", []) if isinstance(m, dict)]
+        names = self.list_models()
+        self.models_found = names
+        if not self.model and names:
+            self.model = names[0]
         if names and self.model not in names:
-            return f"Verbunden – aber das Modell „{self.model}“ kennt der Anbieter nicht."
-        return f"Verbunden ✓ ({self.info.name}, {self.model})"
+            return f"Verbunden – aber das Modell „{self.model}“ kennt der Anbieter nicht. Bitte eins aus der Liste wählen."
+        return f"Verbunden ✓ ({self.info.name}, {self.model or 'Modell wählen'})"

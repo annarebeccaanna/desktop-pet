@@ -65,13 +65,90 @@ def test_errors_are_friendly_and_never_contain_the_key():
     assert "sk-k" not in str(exc.value)
 
 
-def test_oneai_without_url_asks_for_it():
-    p = make_provider("oneai", "key", transport=lambda *a: (200, {}))
-    with pytest.raises(AIError, match="Basis-URL"):
-        p.chat("s", [Message("user", "x")])
-    p = make_provider("oneai", "key", base_url="https://oneai.example/v1",
-                      transport=lambda m, url, h, b: (200, {"choices": [{"message": {"content": url}}]}))
-    assert p.chat("s", [Message("user", "x")]) == "https://oneai.example/v1/chat/completions"
+class _FakeHub:
+    """Nachbau eines oneAI-Hubs (Antworten wie in der offiziellen n8n-Anbindung)."""
+
+    def __init__(self, reject_origin=False):
+        self.calls, self.chats, self.reject_origin = [], 0, reject_origin
+
+    def __call__(self, method, url, headers, body):
+        self.calls.append((method, url, headers.get("Authorization"), body))
+        path = url.split("hub.example", 1)[1]
+        if path == "/api/auth/check":
+            return 200, {"personalProject": "proj-1"}
+        if path == "/api/chats/models":
+            return 200, [{"id": "gpt-x", "name": "GPT X", "reasoning": True}, {"id": "mistral-y", "name": "Y"}]
+        if path == "/api/chats" and method == "POST":
+            if self.reject_origin and "origin" in body:
+                return 400, {"message": "invalid origin"}
+            self.chats += 1
+            return 200, {"chatId": f"chat-{self.chats}"}
+        if path.startswith("/api/chats/") and path.endswith("/http"):
+            return 200, {"response": f"Antwort in {path.split('/')[3]}"}
+        if path == "/api/openai/v1/models":
+            return 200, {"data": [{"id": "gw-model"}]}
+        if path == "/api/openai/v1/chat/completions":
+            return 200, {"choices": [{"message": {"content": f"Gateway {body['model']}"}}]}
+        return 404, {}
+
+
+def test_oneai_keys_are_detected():
+    assert detect_provider("oai_abc123") == "oneai" and detect_provider("oai-gk_abc") == "oneai"
+
+
+def test_oneai_hub_address_is_normalised():
+    from desktop_pets.features.ai.providers.oneai import hub_root
+
+    for url in ("https://hub.example", "https://hub.example/", "https://hub.example/api/openai/v1",
+                "https://hub.example/v1"):
+        assert hub_root(url) == "https://hub.example"
+
+
+def test_oneai_gateway_key_uses_openai_compatible_gateway():
+    hub = _FakeHub()
+    p = make_provider("oneai", "oai-gk_secret", base_url="https://hub.example/", transport=hub)
+    assert "Gateway" in p.test_connection() and p.models_found == ["gw-model"]
+    assert p.chat("System", [Message("user", "Hi")]) == "Gateway gw-model"
+    assert hub.calls[-1][1] == "https://hub.example/api/openai/v1/chat/completions"
+    assert hub.calls[-1][2] == "Bearer oai-gk_secret"
+
+
+def test_oneai_hub_key_uses_hub_chats_and_keeps_one_chat_per_conversation():
+    from desktop_pets.features.ai.providers import oneai
+
+    oneai._CHATS.clear()
+    hub = _FakeHub()
+    p = make_provider("oneai", "oai_hubkey1", base_url="https://hub.example", transport=hub)
+    assert "Hub" in p.test_connection() and p.models_found == ["gpt-x", "mistral-y"]
+    assert p.chat("Du bist Mieze.", [Message("user", "Hallo")]) == "Antwort in chat-1"
+    create = [c for c in hub.calls if c[1].endswith("/api/chats") and c[0] == "POST"][0]
+    assert create[3]["spaceId"] == "proj-1"
+    first = hub.calls[-1][3]
+    assert first["model"] == "gpt-x" and first["reasoningEffort"] == "low"
+    assert first["message"].startswith("Du bist Mieze.") and first["message"].endswith("Hallo")
+    # Folgefrage: gleicher Chat, nur die neue Nachricht
+    answer = p.chat("Du bist Mieze.", [Message("user", "Hallo"), Message("assistant", "Miau"),
+                                       Message("user", "Wie geht's?")])
+    assert answer == "Antwort in chat-1" and hub.calls[-1][3]["message"] == "Wie geht's?"
+    # neues Gespräch → neuer Chat
+    assert p.chat("Du bist Mieze.", [Message("user", "Neu")]) == "Antwort in chat-2"
+
+
+def test_oneai_retries_chat_creation_without_origin():
+    from desktop_pets.features.ai.providers import oneai
+
+    oneai._CHATS.clear()
+    hub = _FakeHub(reject_origin=True)
+    p = make_provider("oneai", "oai_hubkey2", model="mistral-y", base_url="https://hub.example", transport=hub)
+    assert p.chat("s", [Message("user", "x")]) == "Antwort in chat-1"
+    assert "reasoningEffort" not in hub.calls[-1][3]
+
+
+def test_oneai_wrong_address_names_the_url_but_not_the_key():
+    p = make_provider("oneai", "oai_geheim99", base_url="https://hub.example", transport=lambda *a: (404, {}))
+    with pytest.raises(AIError) as exc:
+        p.test_connection()
+    assert "https://hub.example/api/auth/check" in str(exc.value) and "geheim" not in str(exc.value)
 
 
 def test_connection_test_checks_model():
