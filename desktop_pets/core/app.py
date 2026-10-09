@@ -554,7 +554,9 @@ class PetApp(QObject):
             self.say("Hotkey belegt", "Folgende Tastenkürzel sind schon vergeben: " + ", ".join(failed), 8)
 
     def _configure_sound(self) -> None:
-        self.sound.configure(self.settings.get("general.volume", 70), self.settings.get("general.muted", False))
+        self.sound.configure(self.settings.get("general.volume", 70),
+                             pet_sounds=self.settings.get("general.pet_sounds", True),
+                             notice_sounds=self.settings.get("general.notice_sounds", True))
 
     def _on_screen_added(self, screen) -> None:
         screen.availableGeometryChanged.connect(lambda *_: self._on_screens_changed())

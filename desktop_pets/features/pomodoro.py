@@ -185,7 +185,7 @@ class Pomodoro(Feature):
         if self.ctx.modes.paused:
             self.ctx.modes.notify(title, text, key="pomodoro")
             return
-        app.sound.play("pling.wav")
+        app.sound.play("pling.wav", kind="notice")
         app.say(title, text, 60, [("Pause starten", self.start_break, True), ("Später", self._snooze, False)])
 
     def _announce_break_done(self) -> None:
@@ -197,7 +197,7 @@ class Pomodoro(Feature):
         if self.ctx.modes.paused:
             self.ctx.modes.notify(title, text, key="pomodoro")
             return
-        app.sound.play("pling.wav")
+        app.sound.play("pling.wav", kind="notice")
         app.say(title, text, 60, [("Neue Runde starten", self.start, True), ("Fertig", lambda: None, False)])
 
     def _snooze(self) -> None:

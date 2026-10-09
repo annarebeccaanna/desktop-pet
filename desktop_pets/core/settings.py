@@ -19,7 +19,7 @@ from .log import get_logger
 
 log = get_logger("settings")
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 DEFAULTS: dict[str, Any] = {
     "version": SCHEMA_VERSION,
@@ -45,7 +45,8 @@ DEFAULTS: dict[str, Any] = {
     "general": {
         "autostart": False,
         "volume": 70,
-        "muted": False,
+        "pet_sounds": True,       # Tier macht Geräusche (Miau, Schnurren, Bellen …)
+        "notice_sounds": True,    # Hinweistöne (z. B. Pomodoro-„Pling“)
         "language": "de",
     },
     "theme": "retro_xp",
@@ -80,7 +81,17 @@ def _migrate_1_to_2(data: dict) -> dict:
     return data
 
 
-MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _migrate_1_to_2}
+def _migrate_2_to_3(data: dict) -> dict:
+    # v2 hatte nur „Stumm“ für alles – jetzt getrennt nach Tiergeräuschen und Hinweistönen.
+    general = data.get("general", {})
+    if "muted" in general:
+        muted = bool(general.pop("muted"))
+        general.setdefault("pet_sounds", not muted)
+        general.setdefault("notice_sounds", not muted)
+    return data
+
+
+MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _migrate_1_to_2, 2: _migrate_2_to_3}
 
 
 def migrate(data: dict) -> dict:

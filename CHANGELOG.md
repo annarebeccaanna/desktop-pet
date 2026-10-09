@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.1 – Tiergeräusche einzeln abschaltbar
+
+- Einstellungen → **Allgemein → Ton**: statt eines einzigen „Stumm“ jetzt zwei Häkchen –
+  **Tier macht Geräusche** (Miau, Schnurren, Bellen, Mampf …) und **Hinweistöne** (z. B. Pomodoro-„Pling“), je mit eigenem „Probe“-Knopf (spielt auch bei ausgeschalteter Art zur Probe). Lautstärke gilt für beide; im Pause-Modus ist weiterhin alles still.
+- Alte Einstellungen werden übernommen: wer „Stumm“ an hatte, hat danach beide Häkchen aus.
+
+Tests: 134.
+
 ## 0.7.0 – Phase 3: Pomodoro
 
 - **Pomodoro** (ab Werk aus, unter Funktionen → Nützlich im Arbeitsalltag): Standard **55 Minuten Arbeit + 5 Minuten Pause**, beides über das Zahnrad einstellbar.
