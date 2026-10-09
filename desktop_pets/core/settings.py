@@ -19,7 +19,7 @@ from .log import get_logger
 
 log = get_logger("settings")
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 DEFAULTS: dict[str, Any] = {
     "version": SCHEMA_VERSION,
@@ -55,7 +55,6 @@ DEFAULTS: dict[str, Any] = {
     "theme": "retro_xp",
     "bed": {
         "positions": {},      # Bildschirmname -> [x, y] (logische Koordinaten)
-        "hidden": False,
     },
     "state": {},              # Gedächtnis (memory): Bedürfnisse, letzte Position
 }
@@ -104,7 +103,16 @@ def _migrate_3_to_4(data: dict) -> dict:
     return data
 
 
-MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _migrate_1_to_2, 2: _migrate_2_to_3, 3: _migrate_3_to_4}
+def _migrate_4_to_5(data: dict) -> dict:
+    # Das Körbchen ist jetzt immer da: kein Ausblenden, kein Abschalten mehr.
+    data.get("bed", {}).pop("hidden", None)
+    data.get("features", {}).pop("bed", None)
+    return data
+
+
+MIGRATIONS: dict[int, Callable[[dict], dict]] = {
+    1: _migrate_1_to_2, 2: _migrate_2_to_3, 3: _migrate_3_to_4, 4: _migrate_4_to_5,
+}
 
 
 def migrate(data: dict) -> dict:

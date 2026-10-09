@@ -71,6 +71,7 @@ class Feature:
     listed: bool = True               # False = nicht in der Funktionsliste (eigener Schalter woanders)
     settings_key: str | None = None   # Schalter liegt unter diesem Einstellungs-Schlüssel statt features.<id>
     requires: str | None = None       # nur möglich, wenn diese andere Funktion an ist (z. B. Mausjagd → Herumstreunen)
+    always_on: bool = False           # fester Bestandteil, nicht abschaltbar (z. B. Körbchen)
     options: list[Option] = []
 
     def __init__(self, ctx: "AppContext") -> None:

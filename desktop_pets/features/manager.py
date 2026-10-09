@@ -67,6 +67,8 @@ class FeatureManager:
         f = self.features.get(fid)
         if f is None or not f.available:
             return False
+        if not enabled and f.always_on:
+            return False                       # z. B. das Körbchen ist immer da
         if enabled and f.requires and not self.is_enabled(f.requires):
             return False                       # z. B. Mausjagd ohne Herumstreunen
         if persist:
@@ -164,6 +166,8 @@ class FeatureManager:
             return False
 
     def _wanted(self, f: Feature, ignore_parent: bool = False) -> bool:
+        if f.always_on:
+            return True
         if f.requires and not ignore_parent:
             parent = self.features.get(f.requires)
             if parent is not None and not self._wanted(parent):

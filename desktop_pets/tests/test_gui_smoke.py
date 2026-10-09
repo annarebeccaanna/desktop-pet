@@ -55,21 +55,16 @@ def test_app_starts_pauses_and_switches_pets(qapp, tmp_path):
     assert needs.bowl.isVisible()
     assert pa.needs.hunger < 80
 
-    # Körbchen ausblenden → Tray bietet „Körbchen einblenden“ an → wieder da
+    # Das Körbchen ist immer da und lässt sich nicht abschalten
     bed = pa.features.get("bed")
     assert bed.window.isVisible()
-    bed.hide_by_user()
-    assert not bed.window.isVisible()
-    labels = [a.label for a in pa.features.menu_actions("tray")]
-    assert "Körbchen einblenden" in labels
-    bed.show_by_user()
-    assert bed.window.isVisible()
+    assert pa.features.set_enabled("bed", False) is False and bed.window.isVisible()
 
     # Feature umschalten wirkt sofort und bleibt gespeichert
-    pa.features.set_enabled("bed", False)
-    assert not bed.window.isVisible()
+    pa.features.set_enabled("petting", False)
+    assert not pa.features.is_enabled("petting")
     pa.settings.save()
-    assert pa.settings.feature_enabled("bed", True) is False
+    assert pa.settings.feature_enabled("petting", True) is False
 
     pa.open_settings()
     dlg = pa._settings_dialog

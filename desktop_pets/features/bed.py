@@ -1,9 +1,11 @@
 """Körbchen: eigener Schlafplatz auf dem Desktop.
 
-* Liegt hinter allen Fenstern, aber über dem Desktop (wie ein Desktop-Icon).
+* Immer da und nicht abschaltbar. Liegt nur auf dem Desktop – hinter allen Fenstern,
+  aber über dem Hintergrundbild (wie ein Desktop-Icon). Je nach Fenstern sieht man es
+  oder eben nicht.
 * Standard: unten links über der Taskleiste; ziehbar, Position pro Bildschirm gespeichert.
 * Doppelklick weckt das Tier oder schickt es schlafen; Rechtsklick: verschieben,
-  ausblenden, Tier hineinschicken. Ausgeblendet → „Körbchen einblenden“ im Tray-Menü.
+  Tier hineinschicken bzw. wecken.
 * Schläft das Tier am Körbchen (Nickerchen, Inaktivität, „Schlafen schicken“,
   Pause-Modus), kuschelt es sich hinein: Es wird dann im Körbchen-Fenster gezeichnet
   und liegt mit ihm hinter den Fenstern. Wacht es auf, steigt es wieder heraus.
@@ -36,6 +38,8 @@ class Bed(Feature):
     allowed_in_pause = True
     pause_label = "schläft"
     order = 60
+    listed = False                      # kein Schalter: das Körbchen ist immer da
+    always_on = True
 
     def __init__(self, ctx) -> None:
         super().__init__(ctx)
@@ -82,13 +86,9 @@ class Bed(Feature):
     def visible(self) -> bool:
         return self.window is not None and self.window.isVisible()
 
-    @property
-    def hidden_by_user(self) -> bool:
-        return bool(self.ctx.settings.get("bed.hidden"))
-
     def _update_visibility(self, reposition: bool = False) -> None:
         win = self._ensure_window()
-        if self.enabled and not self.hidden_by_user:
+        if self.enabled:
             if reposition or not win.isVisible():
                 win.place_bottom_center(self._saved_position())
             win.show()
@@ -204,18 +204,11 @@ class Bed(Feature):
         name = app.pack.bed_name if app is not None else "Körbchen"
         m = QMenu()
         m.addAction(f"{name} verschieben", self.window.start_move_mode)
-        m.addAction(f"{name} ausblenden", self.hide_by_user)
         if app is not None and app.in_bed and not self.ctx.modes.paused:
             m.addAction("Tier wecken", self.wake_pet)
         else:
             m.addAction("Tier hineinschicken", self.send_pet).setEnabled(not self.ctx.modes.paused)
         m.exec(pos)
-
-    def hide_by_user(self) -> None:
-        self.ctx.settings.set("bed.hidden", True)
-
-    def show_by_user(self) -> None:
-        self.ctx.settings.set("bed.hidden", False)
 
     # ------------------------------------------------------------------ #
     # Im Körbchen schlafen
@@ -291,13 +284,11 @@ class Bed(Feature):
             self._ensure_window().set_pixmap(pixmap)
 
     def on_settings_changed(self, key: str, value) -> None:  # noqa: ARG002
-        if key == "*" or key.startswith("bed.hidden"):
-            self._update_visibility(reposition=key == "*")
+        if key == "*":
+            self._update_visibility(reposition=True)
 
     def menu_actions(self, where: str) -> list[MenuAction]:
         paused = self.ctx.modes.paused
         if where == "tray":
-            if self.hidden_by_user:
-                return [MenuAction("Körbchen einblenden", self.show_by_user, order=46)]
             return [MenuAction("Ins Körbchen schicken", self.send_pet, enabled=not paused, order=45)]
         return []
