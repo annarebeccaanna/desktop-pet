@@ -7,3 +7,8 @@ winrt-Windows.Foundation>=3; sys_platform == "win32"
 winrt-Windows.Foundation.Collections>=3; sys_platform == "win32"
 winrt-Windows.Globalization>=3; sys_platform == "win32"
 winrt-Windows.Media.SpeechRecognition>=3; sys_platform == "win32"
+# Kalender
+icalendar>=6
+recurring-ical-events>=3
+tzdata                                   # Zeitzonen (unter Windows nicht eingebaut)
+pywin32>=306; sys_platform == "win32"    # Termine aus Outlook (Desktop-App)

@@ -292,7 +292,29 @@ class OptionsDialog(RetroWindow):
                 w.toggled.connect(lambda v, k=opt.key: self._set(k, bool(v)))
                 grid.addWidget(w, row, 0, 1, 2)
                 continue
+            if opt.kind == "button":
+                # Aktion der Funktion (z. B. „Jetzt laden“) mit Ergebniszeile
+                btn = QPushButton(opt.label, box)
+                result = QLabel("", box)
+                result.setObjectName("muted")
+                result.setWordWrap(True)
+                btn.clicked.connect(lambda _=False, m=opt.default, lab=result:
+                                    getattr(feature, m)(lambda text, lab=lab: lab.setText(text)))
+                grid.addWidget(btn, row, 0)
+                grid.addWidget(result, row, 1)
+                self.results = getattr(self, "results", []) + [result]
+                continue
             grid.addWidget(QLabel(opt.label + ":", box), row, 0)
+            if opt.kind == "secret":
+                # Wie ein Passwort: liegt im Windows-Anmeldeinformationsspeicher, nie in settings.json
+                w = QLineEdit(box)
+                w.setEchoMode(QLineEdit.Password)
+                w.setPlaceholderText("Gespeichert ✓ (zum Ändern neu einfügen)" if feature.secret_get(opt.key)
+                                     else "Einfügen …")
+                w.setMinimumWidth(260)
+                w.editingFinished.connect(lambda k=opt.key, le=w: self._secret(k, le))
+                grid.addWidget(w, row, 1)
+                continue
             if opt.kind == "int":
                 w = QSpinBox(box)
                 w.setRange(opt.minimum, opt.maximum)
@@ -317,10 +339,19 @@ class OptionsDialog(RetroWindow):
         ok.clicked.connect(self.close)
         btns.addWidget(ok)
         lay.addLayout(btns)
-        self.resize(340, 60 + 34 * max(1, len(feature.options)) + 70)
+        self.resize(420 if any(o.kind in ("secret", "button") for o in feature.options) else 340,
+                    60 + 34 * max(1, len(feature.options)) + 70)
 
     def _set(self, key: str, value) -> None:
         self.app.settings.set_feature_option(self.feature.id, key, value)
+
+    def _secret(self, key: str, edit: QLineEdit) -> None:
+        text = edit.text().strip()
+        if not text:
+            return
+        self.feature.secret_set(key, text)
+        edit.clear()
+        edit.setPlaceholderText("Gespeichert ✓ (zum Ändern neu einfügen)")
 
 
 # --------------------------------------------------------------------------- #

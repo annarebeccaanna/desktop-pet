@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.11.0 – Text-Werkzeuge, Kalender, Systemlast, Geschenke, Einführung
+
+- **Text-Werkzeuge** (Funktionen → Arbeitsalltag, ab Werk an): Text irgendwo markieren → **Copilot-Taste** oder `Strg + Alt + M`.
+  - Am Tier öffnet sich ein **Pixel-Menü** mit eigenen Pixel-Icons: Verbessern, Kürzer, Freundlicher, Förmlicher, Übersetzen (DE↔EN), Zusammenfassen, Erklären oder eine eigene Anweisung.
+  - Das Ergebnis ist vor dem Einfügen noch editierbar. **Ersetzen** setzt es an die Stelle der Markierung, **Kopieren** legt es in die Zwischenablage.
+  - Die eigene Zwischenablage bleibt erhalten.
+  - In Konsolen wird nie automatisch Strg + C gedrückt (dort hieße das „abbrechen“).
+  - Ist nichts markiert, öffnet die Copilot-Taste wie gewohnt den Chat (abschaltbar im Tab KI).
+  - Bei oneAI teilen sich die Einzelaufträge einen Hub-Chat („Desktop Pets Text-Werkzeuge“), alle 10 Aufträge ein frischer.
+- **Diktieren: gesprochene Satzzeichen** – „Punkt“, „Komma“, „Fragezeichen“, „Ausrufezeichen“, „Doppelpunkt“, „neue Zeile“, „neuer Absatz“, „Klammer auf/zu“, „Bindestrich“ … werden zu Zeichen, Satzanfänge groß. „Der springende Punkt“ bleibt ein Wort. Abschaltbar über das Zahnrad.
+- **Kalender** (ab Werk an): Das Tier ruft kurz vor Terminen (Standard 5 Minuten, einstellbar), bei Online-Terminen mit **Beitreten** (Teams, Zoom, Meet, Webex). Im Pause-Modus kommt die Meldung gesammelt danach.
+  - **Quelle:** Outlook (Desktop-App, wenn sie läuft – wird nie selbst gestartet) oder ICS-Link/-Datei. Serientermine, Ausnahmen und Windows-Zeitzonen werden richtig aufgelöst.
+  - **Der ICS-Link** ist wie ein Passwort und liegt deshalb im Windows-Anmeldeinformationsspeicher.
+  - **Zahnrad:** Quelle wählen, Link einfügen, „Jetzt laden“ zeigt, was gefunden wurde.
+- **Systemlast** (ab Werk an): Läuft die CPU länger heiß, schwitzt das Tier (Pixel-Schweißtropfen), hechelt und setzt sich lieber hin. Bei wenig Akku (≤ 20 %, kein Kabel) wird es müde, kommt der Stecker, freut es sich. Sprechblasen nur einmal pro Episode, im Pause-Modus still.
+- **Geschenke** (Chaos & Spaß, laut Spezifikation ab Werk aus – unter Funktionen einschalten):
+  - Das Tier bringt ab und zu etwas und legt es neben sein Körbchen: Katze Pixelmaus oder Wollknäuel, Hund Knochen oder Ball, Drache Edelstein oder Goldmünze, Axolotl Muschel oder Perle.
+  - Klick nimmt das Geschenk an. Höchstens 3 liegen herum.
+  - Häufigkeit über das Zahnrad, sofort per Rechtsklick → „Bring mir was!“.
+- **Einführung beim ersten Start:** Das Tier stellt sich in 5 Sprechblasen vor (Streicheln & Menü, Pause-Modus, KI & Diktieren, Tray), mit Weiter, Überspringen und „KI einrichten“. Wieder aufrufbar im Tray-Menü.
+- Zahnrad-Dialoge können jetzt geschützte Felder (Anmeldeinformationsspeicher) und Aktionsknöpfe enthalten.
+- Neue Pakete: `icalendar`, `recurring-ical-events`, `tzdata`, unter Windows `pywin32` (Outlook).
+
+Tests: 254.
+
+- [ ] **Auf Windows prüfen:** Text in Outlook/Word markieren → Copilot → „Förmlicher“ → Ersetzen.
+- [ ] **Auf Windows prüfen:** Kalender mit laufendem Outlook → „Jetzt laden“ zeigt die Termine; Erinnerung kommt 5 Minuten vorher.
+- [ ] **Auf Windows prüfen:** Einführung erscheint beim ersten Start (oder Tray → „Einführung zeigen“).
+
 ## 0.10.0 – Diktieren
 
 - **Diktieren** (neue Funktion, ab Werk an, unter Funktionen → Nützlich im Arbeitsalltag): sprechen statt tippen.

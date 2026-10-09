@@ -7,7 +7,6 @@ from .base import planned
 
 # Nützlich im Arbeitsalltag – Phase 3
 planned("reminders", "Erinnerungen", "Trinken, Aufstehen, Lüften", "work", "später", "Phase 3", 20)
-planned("calendar_alerts", "Kalender", "Miaut vor Terminen (Outlook oder ICS)", "work", "später", "Phase 3", 30)
 planned("event_webhook", "Build & Tests", "Lokaler Webhook: Freudensprung oder Fauchen", "work", "stumm", "Phase 3", 40)
 
 # Chaos & Spaß – Phase 4 (ab Werk aus)
