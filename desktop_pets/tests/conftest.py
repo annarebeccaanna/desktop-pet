@@ -22,3 +22,12 @@ def _no_real_keyring(monkeypatch):
 
     monkeypatch.setattr(keys, "USE_KEYRING", False)
     yield
+
+
+@pytest.fixture(autouse=True)
+def _no_onboarding_popup(monkeypatch):
+    """Die Einführung beim ersten Start würde sonst in laufende Tests hineinplatzen."""
+    from desktop_pets.features import onboarding
+
+    monkeypatch.setattr(onboarding, "START_DELAY_MS", 10 ** 8)
+    yield

@@ -109,6 +109,7 @@ class SpeechBubble(QWidget):
         while self.buttons.count():
             item = self.buttons.takeAt(0)
             if item.widget():
+                item.widget().hide()            # sofort weg, nicht erst beim Aufräumen
                 item.widget().deleteLater()
         for label, cb, primary in buttons or []:
             btn = QPushButton(label, self)
