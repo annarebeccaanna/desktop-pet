@@ -1,1 +1,3 @@
 PySide6>=6.6
+anthropic>=1.0       # KI-Chat mit Claude
+keyring>=25          # API-Keys im Windows-Anmeldeinformationsspeicher

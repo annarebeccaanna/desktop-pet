@@ -42,6 +42,8 @@ DEFAULTS: dict[str, Any] = {
         "toggle_pause": "Ctrl+Alt+P",
         "toggle_visible": "Ctrl+Alt+H",
         "pomodoro": "Ctrl+Alt+T",
+        "ai_chat": "Ctrl+Alt+K",          # KI-Chat öffnen (Alternative zur Copilot-Taste)
+        "ai_voice": "Ctrl+Alt+Shift+K",   # KI-Chat mit Spracheingabe (wie Alt + Copilot)
     },
     "general": {
         "autostart": False,
@@ -51,6 +53,12 @@ DEFAULTS: dict[str, Any] = {
         "copilot_key": False,     # Copilot-Taste (Win + Umschalt + F23) für Desktop Pets nutzen
         "copilot_action": "settings",
         "language": "de",
+    },
+    "ai": {
+        "provider": "",       # aktiver Anbieter (Keys liegen im Windows-Anmeldeinformationsspeicher!)
+        "models": {},         # Anbieter -> Modell
+        "base_urls": {},      # Anbieter -> Basis-URL (OneAI, eigener Endpunkt)
+        "personality": {},    # pet_id -> eigener Persönlichkeits-Text
     },
     "theme": "retro_xp",
     "bed": {

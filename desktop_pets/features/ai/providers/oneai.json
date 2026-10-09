@@ -1,0 +1,10 @@
+{
+  "_hinweis": "OneAI-Zugang: Basis-URL, Anmeldung und Modelle hier eintragen (ohne Codeänderung). Bis die Angaben vorliegen, wird OneAI als OpenAI-kompatibler Endpunkt behandelt; die Basis-URL lässt sich auch im Tab KI unter Erweitert eintragen.",
+  "name": "OneAI",
+  "base_url": "",
+  "auth_header": "Authorization",
+  "auth_scheme": "Bearer ",
+  "default_model": "",
+  "models": [],
+  "prefixes": []
+}

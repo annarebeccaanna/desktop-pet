@@ -18,5 +18,4 @@ planned("cursor_steal", "Maus klauen", "Schnappt sich kurz den Mauszeiger", "cha
 
 # Sozial & Erweiterbar
 planned("multi_pet", "Mehrere Tiere", "Spielen, jagen und streiten miteinander", "social", "liegen", "Phase 4", 10)
-planned("ai_chat", "KI-Chat", "Chatten über eigenen API-Key", "social", "immer aus", "Phase 5", 20)
 planned("network_visit", "Besuche", "Besucht Desktops von Freunden", "social", "immer aus", "Phase 5", 30)

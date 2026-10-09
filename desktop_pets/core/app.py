@@ -276,12 +276,12 @@ class PetApp(QObject):
     def wake_pet(self) -> None:
         self.brain.wake()
 
-    def open_settings(self) -> None:
+    def open_settings(self, tab: str | None = None) -> None:
         from ..ui.settings_dialog import SettingsDialog
 
         if self._settings_dialog is None:
             self._settings_dialog = SettingsDialog(self)
-        self._settings_dialog.open_fresh()
+        self._settings_dialog.open_fresh(tab)
 
     def open_about(self) -> None:
         from ..ui.about import AboutDialog
@@ -292,7 +292,7 @@ class PetApp(QObject):
     # ------------------------------------------------------------------ #
     # Hilfen für Funktionen
     # ------------------------------------------------------------------ #
-    def say(self, title: str, text: str, timeout: float = 6, buttons=None) -> None:
+    def say(self, title: str, text: str, timeout: float = 6, buttons=None, wide: bool = False) -> None:
         """Sprechblase über dem Tier (im Pause-Modus nie)."""
         if self.modes.paused:
             return
@@ -303,7 +303,7 @@ class PetApp(QObject):
         if self.pet_hidden or self.in_bed:
             self.tray.tray.showMessage(title or APP_NAME, text)
             return
-        self.bubble.show_message(title, text, self.pet_window.head_anchor(), timeout, buttons)
+        self.bubble.show_message(title, text, self.pet_window.head_anchor(), timeout, buttons, wide=wide)
         self.apply_capture()
 
     def hearts(self, count: int = 3) -> None:

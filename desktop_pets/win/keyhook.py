@@ -25,6 +25,7 @@ log = get_logger("win.keyhook")
 VK_F23 = 0x86
 VK_WIN = {0x5B, 0x5C}                 # linke/rechte Windows-Taste
 VK_SHIFT = {0x10, 0xA0, 0xA1}
+VK_ALT = {0x12, 0xA4, 0xA5}           # Alt + Copilot = Spracheingabe
 VK_DUMMY = 0xE8                       # unbelegt – unterdrückt das Startmenü
 
 
@@ -35,6 +36,7 @@ class ComboMatcher:
         self.key = key
         self.pressed: set[int] = set()
         self.swallowing = False
+        self.alt = False                      # war Alt beim letzten Auslösen gedrückt?
 
     def reset(self) -> None:
         self.pressed.clear()
@@ -44,7 +46,7 @@ class ComboMatcher:
         """Gibt (schlucken, auslösen) zurück."""
         if injected:
             return False, False           # eigene/fremde künstliche Tasten nie anfassen
-        if vk in VK_WIN or vk in VK_SHIFT:
+        if vk in VK_WIN or vk in VK_SHIFT or vk in VK_ALT:
             if down:
                 self.pressed.add(vk)
             else:
@@ -56,6 +58,8 @@ class ComboMatcher:
             held = bool(self.pressed & VK_WIN) and bool(self.pressed & VK_SHIFT)
             if held or self.swallowing:
                 fire = not self.swallowing      # Tastenwiederholung löst nicht erneut aus
+                if fire:
+                    self.alt = bool(self.pressed & VK_ALT)
                 self.swallowing = True
                 return True, fire
             return False, False
@@ -66,10 +70,10 @@ class ComboMatcher:
 
 
 class CopilotKeyHook:
-    """Fängt die Copilot-Taste ab, solange gestartet. ``on_fire`` läuft im Hook-Thread –
+    """Fängt die Copilot-Taste ab, solange gestartet. ``on_fire(alt)`` läuft im Hook-Thread –
     der Aufrufer muss selbst in den GUI-Thread wechseln (z. B. per Qt-Signal)."""
 
-    def __init__(self, on_fire: Callable[[], None]) -> None:
+    def __init__(self, on_fire: Callable[[bool], None]) -> None:
         self.on_fire = on_fire
         self.matcher = ComboMatcher()
         self._thread: threading.Thread | None = None
@@ -141,7 +145,7 @@ class CopilotKeyHook:
                         user32.keybd_event(VK_DUMMY, 0, 0, 0)
                         user32.keybd_event(VK_DUMMY, 0, KEYEVENTF_KEYUP, 0)
                         try:
-                            self.on_fire()
+                            self.on_fire(self.matcher.alt)
                         except Exception:  # noqa: BLE001
                             log.exception("Fehler in der Copilot-Tasten-Aktion")
                     if swallow:

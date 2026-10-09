@@ -1,7 +1,8 @@
 """Einstellungsdialog im Retro-Stil (XP × Paint).
 
 Tabs: Tiere (Mini-Paint), Funktionen (automatisch aus der Registry),
-Pause & Freigabe, Allgemein. Änderungen wirken sofort; „Abbrechen“ stellt den
+Pause & Freigabe, KI (eigene Datei ``ai_tab.py``), Allgemein.
+Änderungen wirken sofort; „Abbrechen“ stellt den
 Stand beim Öffnen wieder her, „Übernehmen“ macht den aktuellen Stand zum neuen
 Ausgangspunkt.
 """
@@ -344,6 +345,10 @@ class SettingsDialog(RetroWindow):
         self.tabs.addTab(self._build_pets_tab(), "Tiere")
         self.tabs.addTab(self._build_features_tab(), "Funktionen")
         self.tabs.addTab(self._build_pause_tab(), "Pause && Freigabe")
+        from .ai_tab import AITab
+
+        self.ai_tab = AITab(app)
+        self.tabs.addTab(self.ai_tab, "KI")
         self.tabs.addTab(self._build_general_tab(), "Allgemein")
         self.tabs.currentChanged.connect(lambda _i: self._update_status())
         lay.addWidget(self.tabs, 1)
@@ -474,9 +479,13 @@ class SettingsDialog(RetroWindow):
         self._update_status("Verworfen")
 
     # ---------- öffnen / schließen ----------
-    def open_fresh(self) -> None:
+    def open_fresh(self, tab: str | None = None) -> None:
         self._snapshot = self.settings.snapshot()
         self._refresh_all()
+        if tab:
+            for i in range(self.tabs.count()):
+                if self.tabs.tabText(i).replace("&&", "&") == tab:
+                    self.tabs.setCurrentIndex(i)
         if not self.isVisible():
             self.show()
         self.showNormal()
@@ -501,6 +510,7 @@ class SettingsDialog(RetroWindow):
             self._refresh_pets_tab()
             self._refresh_features_tab()
             self._refresh_pause_tab()
+            self.ai_tab.refresh()
             self._refresh_general_tab()
         finally:
             self._building = False
@@ -797,6 +807,8 @@ class SettingsDialog(RetroWindow):
             self._building = True
             self._refresh_features_tab()
             self._building = False
+            if feature_id == "ai_chat":
+                self.ai_tab.refresh()
             self._update_status()
 
     def _open_options(self, feature: Feature) -> None:
@@ -1134,6 +1146,13 @@ class SettingsDialog(RetroWindow):
             else:
                 protect = "nicht verfügbar"
             fields = [f"Modus: {mode}", f"Aufnahme-Schutz: {protect}"]
+        elif self.tabs.tabText(idx) == "KI":
+            chat = app.features.get("ai_chat")
+            from ..features.ai.providers import PROVIDERS
+
+            info = PROVIDERS.get(chat.provider_id) if chat else None
+            fields = [f"Anbieter: {info.name if info else 'keiner'}",
+                      f"Chat: {'an' if chat and chat.enabled else 'aus'}"]
         else:
             fields = [f"Version {__version__}", "Retro XP"]
         if note:

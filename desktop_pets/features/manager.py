@@ -65,8 +65,8 @@ class FeatureManager:
 
     def set_enabled(self, fid: str, enabled: bool, persist: bool = True) -> bool:
         f = self.features.get(fid)
-        if f is None or not f.available:
-            return False
+        if f is None or (enabled and not f.available):
+            return False                       # Ausschalten geht immer (z. B. KI-Chat nach „Key löschen“)
         if not enabled and f.always_on:
             return False                       # z. B. das Körbchen ist immer da
         if enabled and f.requires and not self.is_enabled(f.requires):
@@ -94,9 +94,7 @@ class FeatureManager:
     def sync_from_settings(self) -> None:
         """Nach „Abbrechen“/„Zurücksetzen“: Zustand aus den Einstellungen übernehmen."""
         for fid, f in self.features.items():
-            if not f.available:
-                continue
-            want = self._wanted(f)
+            want = f.available and self._wanted(f)
             if want != f.enabled:
                 self.set_enabled(fid, want, persist=False)
 

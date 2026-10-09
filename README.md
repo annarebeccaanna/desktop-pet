@@ -28,6 +28,8 @@ Das Tier erscheint unten rechts über der Taskleiste, das Tray-Icon zeigt seinen
 | Pause-Modus umschalten | `Strg + Alt + P` |
 | Tier ein-/ausblenden | `Strg + Alt + H` |
 | Pomodoro starten/stoppen | `Strg + Alt + T` (wenn Pomodoro eingeschaltet ist) |
+| KI-Chat öffnen | `Strg + Alt + K` oder Copilot-Taste |
+| KI-Chat mit Spracheingabe | `Strg + Alt + Umschalt + K` oder Alt + Copilot-Taste |
 
 Alle Tastenkürzel lassen sich im Einstellungsdialog ändern.
 
@@ -91,11 +93,20 @@ Animationen je Tier (alle Tiere haben dieselben Dateien): `idle`, `move` (Fortbe
 
 Unter Einstellungen → **Pause & Freigabe** lässt sich die Pause automatisch starten, sobald eine Freigabe erkannt wird. Erkannt werden die Freigabe-Leisten von Teams, Zoom, Webex und den gängigen Browsern. „Erkennung testen …“ zeigt live, was erkannt wird. Eigene Regeln (Programm, Fensterklasse, Titel als regulärer Ausdruck) kommen in `%APPDATA%\DesktopPets\share_signatures.json`.
 
+## KI-Chat
+
+Unter Einstellungen → **KI** einen API-Key einfügen (ChatGPT, Claude, OneAI, Gemini, Mistral, OpenRouter, Groq, xAI oder ein eigener OpenAI-kompatibler Endpunkt wie Ollama). Der Anbieter wird am Key erkannt, sonst wählt man ihn aus. „Verbindung testen“ prüft Key und Modell, ohne etwas zu kosten.
+
+Dann öffnet die Copilot-Taste (Häkchen „Copilot-Taste öffnet den Chat“) oder `Strg + Alt + K` eine Sprechblase am Tier: Frage eintippen, Enter – die Antwort kommt als Sprechblase. **Alt + Copilot** (oder `Strg + Alt + Umschalt + K`) startet zusätzlich die Windows-Spracheingabe; sobald man aufhört zu sprechen, geht die Frage ab.
+
+OneAI: Basis-URL im Tab KI unter „Erweitert“ eintragen oder fest in `desktop_pets/features/ai/providers/oneai.json`.
+
 ## Daten & Datenschutz
 
 * Einstellungen: `%APPDATA%\DesktopPets\settings.json`
 * Protokoll: `%APPDATA%\DesktopPets\log.txt`
-* Ohne ausdrückliche Aktivierung verlässt nichts den Rechner. API-Keys (ab Phase 5) landen nie in der JSON oder im Log.
+* Ohne ausdrückliche Aktivierung verlässt nichts den Rechner. API-Keys liegen im Windows-Anmeldeinformationsspeicher (Credential Manager), nie in der JSON oder im Log.
+* KI-Chat: Gesendet wird nur, was man eintippt oder sagt – nie Fenstertitel oder Screenshots. Der Verlauf bleibt nur im Speicher (nach 15 Minuten Ruhe vergessen), im Pause-Modus ist der Chat aus.
 
 ## Aufbau
 
@@ -106,9 +117,10 @@ desktop_pets/
 ├── pet/               pet_window, animator, choreo (Übergänge), brain, needs, physics, pack,
 │                      sprites, textsprites, recolor
 ├── features/          eine Datei je Funktion – mit ihrer ganzen Logik, ihren Fenstern und Menüeinträgen
-│                      (base.Feature: behaviours, contribute, on_brain_event, menu_actions …)
-├── win/               capture, hotkeys, idle, windows_enum, zorder, dwm, autostart
-├── ui/                tray, settings_dialog, speech_bubble, retro (Titelleiste usw.), theme, about
+│   │                  (base.Feature: behaviours, contribute, on_brain_event, menu_actions …)
+│   └── ai/            KI-Chat: providers/ (je Anbieter eine Datei), detect, keys, chat
+├── win/               capture, hotkeys, keyhook, input, idle, windows_enum, zorder, dwm, autostart
+├── ui/                tray, settings_dialog, ai_tab, chat_input, speech_bubble, retro, theme, about
 ├── themes/            retro_xp.qss + retro_xp.json
 ├── assets/            Pixelschrift (Silkscreen, OFL), Sounds, UI-Grafiken
 ├── pets/              cat, dog, dragon, axolotl (je art/*.txt = Pixel-Art als Text)

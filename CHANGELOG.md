@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.9.0 – Phase 5: KI-Chat, Körbchen immer da
+
+**KI-Chat** (Funktion `ai_chat`, Einstellungen → neuer Tab **KI**)
+- **Anbieter:** OneAI (oben), Automatisch erkennen, Anthropic (Claude), OpenAI (ChatGPT), Google (Gemini), Mistral, OpenRouter, Groq, xAI, Eigener Endpunkt (OpenAI-kompatibel, z. B. Ollama/LM Studio). Je Anbieter eine eigene kleine Datei unter `features/ai/providers/`.
+- **Ein Feld:** Key einfügen → Anbieter wird am Präfix erkannt (lokal, ohne Netzwerk). Ohne eindeutiges Präfix (Mistral, OneAI) wählt man ihn aus. Pro Anbieter ein Key, einer ist aktiv.
+- **Keys** liegen im Windows-Anmeldeinformationsspeicher (`keyring`), nie in `settings.json` oder `log.txt`. Angezeigt werden sie nur maskiert. Ohne Key ist der Chat ausgegraut; beim Speichern des ersten Keys geht er an.
+- **Erweitert:** Modell (Auswahl oder Freitext) und Basis-URL. Klappt bei OneAI und eigenem Endpunkt automatisch auf. **Verbindung testen** prüft Key und Modell, ohne Kosten.
+- **OneAI:** Bis die Zugangsdaten feststehen, ist es ein OpenAI-kompatibler Endpunkt mit frei eintragbarer Basis-URL. Feste Werte lassen sich ohne Codeänderung in `features/ai/providers/oneai.json` hinterlegen.
+- **Claude** läuft über das offizielle `anthropic`-SDK (Standardmodell `claude-opus-5-5`, wenig Denkaufwand für schnelle Antworten, serverseitiger Ersatz bei Ablehnung). Alle anderen über die OpenAI-kompatible Schnittstelle.
+- **Öffnen:**
+  - Copilot-Taste (Häkchen „Copilot-Taste öffnet den Chat“ im Tab KI oder Aktion „KI-Chat öffnen“ unter Allgemein).
+  - Alternativ `Strg + Alt + K` (änderbar) oder Rechtsklick → „Mit dem Tier chatten …“.
+  - Das Tier setzt sich hin, eine Eingabe-Sprechblase geht von ihm aus. Enter schickt ab, Esc schließt.
+- **Antwort** als breite Sprechblase mit **Antworten** und **Kopieren**. Der Verlauf geht mit (letzte 8 Runden) und wird nach 15 Minuten Ruhe vergessen.
+- **Spracheingabe:** Alt + Copilot-Taste oder `Strg + Alt + Umschalt + K`. Die Blase startet die Windows-Spracheingabe (Win + H), die direkt ins Feld schreibt. Kommt 2,5 Sekunden nichts Neues dazu, geht die Frage automatisch ab (Enter = sofort).
+- **Persönlichkeit** je Tierart editierbar (Standard aus `pet.json`), Knopf „Standard“ setzt zurück.
+- **Datenschutz:** Es geht nur der Chattext hinaus. Kein Speichern, kein Protokollieren des Inhalts. Im Pause-Modus ist der Chat aus, eine noch laufende Antwort wird verworfen.
+
+**Körbchen**
+- Das Körbchen ist immer da: kein „Körbchen ausblenden“ und kein Schalter unter Funktionen mehr (Migration v5).
+- Es liegt nur auf dem Desktop hinter allen Fenstern – je nach Fenstern sieht man es oder nicht. Das Tier geht zum Schlafen hinein.
+
+**Vermerkt für später**
+- Pomodoro bleibt vorerst ein reiner Timer. Option später: Erinnerungen während einer Arbeitsphase zurückhalten.
+- Erinnerungen: Abstände und Arbeitszeiten noch offen.
+
+Tests: 184 (neu: Erkennung, Anbieter-Anfragen inkl. Claude-SDK-Parameter, Fehlermeldungen ohne Key, Keyspeicher, Verlauf, Alt + Copilot, kompletter Chat mit dem Tier, Pause-Modus, Key nie in JSON/Log, Tab KI).
+
+- [ ] **Auf Windows prüfen:** Key einfügen → erkannt, „Verbindung testen“ grün.
+- [ ] **Auf Windows prüfen:** Copilot-Taste → Eingabe-Blase hat sofort den Tastaturfokus, Enter → Antwort in der Sprechblase.
+- [ ] **Auf Windows prüfen:** Alt + Copilot → Spracheingabe öffnet sich, Gesprochenes landet im Feld und geht automatisch ab.
+- [ ] **Auf Windows prüfen:** In der Windows-Anmeldeinformationsverwaltung steht der Key unter „DesktopPets“, in `settings.json` und `log.txt` nicht.
+
 ## 0.8.1 – Einstellungen aufgeräumt, Körbchen und Fenster zuverlässiger
 
 - **Rücksicht bei Vollbild** gibt es nur noch einmal: als Häkchen „Bei Vollbild verstecken“ unter **Pause & Freigabe → Bildschirmfreigabe** (ab Werk an). Der Eintrag in der Funktionsliste ist weg; die bisherige Einstellung wird übernommen.

@@ -67,7 +67,7 @@ def test_off_by_default_and_checkbox_switches_it(pa):
 def test_key_press_opens_settings_and_other_actions(pa):
     feature = pa.features.get("copilot_key")
     pa.settings.set("general.copilot_key", True)
-    feature._bridge.fired.emit()             # so meldet der Hook-Thread einen Tastendruck
+    feature._bridge.fired.emit(False)        # so meldet der Hook-Thread einen Tastendruck
     assert pa._settings_dialog is not None and pa._settings_dialog.isVisible()
     pa._settings_dialog.close()
     pa.settings.set("general.copilot_action", "pause")

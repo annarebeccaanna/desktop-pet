@@ -39,6 +39,18 @@ class _CloseX(QPushButton):
         p.drawLine(11, 4, 5, 10)
 
 
+def bubble_position(anchor: QPoint, w: int, h: int) -> tuple[int, int]:
+    """Blase links vom Tier, Schwanz rechts unten – oder rechts, wenn links kein Platz ist."""
+    screen = QGuiApplication.screenAt(anchor) or QGuiApplication.primaryScreen()
+    geo = screen.availableGeometry()
+    x = anchor.x() - w + 40
+    if x < geo.left() + 4:
+        x = anchor.x() - 40
+    x = max(geo.left() + 4, min(x, geo.right() - w - 4))
+    y = max(geo.top() + 4, anchor.y() - h)
+    return x, y
+
+
 class SpeechBubble(QWidget):
     closed = Signal()
 
@@ -78,7 +90,18 @@ class SpeechBubble(QWidget):
 
     # ---------- öffentlich ----------
     def show_message(self, title: str, text: str, anchor: QPoint, timeout_s: float = 7.0,
-                     buttons: list[tuple[str, Callable[[], None], bool]] | None = None) -> None:
+                     buttons: list[tuple[str, Callable[[], None], bool]] | None = None,
+                     wide: bool = False) -> None:
+        """``wide``: breiter und markierbar – z. B. für Antworten aus dem KI-Chat."""
+        if wide:
+            # Lange Antworten: so breit wie nötig (bis 380 px), damit die Blase nicht zum Turm wird
+            natural = self.text.fontMetrics().horizontalAdvance(text) + 8
+            self.text.setFixedWidth(max(220, min(380, natural)))
+        else:
+            self.text.setMinimumWidth(0)
+            self.text.setMaximumWidth(260)
+        self.text.setTextInteractionFlags(Qt.TextSelectableByMouse if wide else Qt.NoTextInteraction)
+        self.text.setTextFormat(Qt.PlainText if wide else Qt.AutoText)
         self.title.setText(title.upper())
         self.title.setVisible(bool(title))
         self.text.setText(text)
@@ -109,17 +132,7 @@ class SpeechBubble(QWidget):
     def follow(self, anchor: QPoint) -> None:
         """Positioniert die Blase so, dass der Schwanz auf ``anchor`` (Kopf des Tiers) zeigt."""
         self._anchor = anchor
-        w, h = self.width(), self.height()
-        screen = QGuiApplication.screenAt(anchor) or QGuiApplication.primaryScreen()
-        geo = screen.availableGeometry()
-        # Blase links vom Tier, Schwanz rechts unten – oder rechts, wenn links kein Platz ist
-        x = anchor.x() - w + 40
-        if x < geo.left() + 4:
-            x = anchor.x() - 40
-        x = max(geo.left() + 4, min(x, geo.right() - w - 4))
-        y = anchor.y() - h
-        if y < geo.top() + 4:
-            y = geo.top() + 4
+        x, y = bubble_position(anchor, self.width(), self.height())
         self.move(x, y)
         self._tail_local = QPoint(anchor.x() - x, anchor.y() - y)
         self.update()

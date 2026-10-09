@@ -12,8 +12,9 @@ from PySide6.QtCore import QObject, Signal
 from ..win.keyhook import CopilotKeyHook
 from .base import Feature, register
 
-# Wert → Anzeige (später kommt „KI-Chat öffnen“ dazu)
+# Wert → Anzeige
 ACTIONS = [
+    ("ai_chat", "KI-Chat öffnen"),
     ("settings", "Einstellungen öffnen"),
     ("call", "Tier zu mir rufen"),
     ("pause", "Pause-Modus umschalten"),
@@ -23,7 +24,7 @@ ACTIONS = [
 class _Bridge(QObject):
     """Hook-Thread → GUI-Thread (Qt stellt das Signal automatisch in die Warteschlange)."""
 
-    fired = Signal()
+    fired = Signal(bool)            # alt: Alt war gedrückt (Alt + Copilot)
 
 
 @register
@@ -65,14 +66,18 @@ class CopilotKey(Feature):
     def disable(self) -> None:
         self.hook.stop()
 
-    def trigger(self) -> None:
-        """Copilot-Taste gedrückt (läuft im GUI-Thread)."""
+    def trigger(self, alt: bool = False) -> None:
+        """Copilot-Taste gedrückt (läuft im GUI-Thread). Alt + Copilot = Spracheingabe."""
         app = self.ctx.app
         if app is None or not self.enabled:
             return
         self.fired_count += 1
         action = self.action
-        if action == "settings":
+        if action == "ai_chat" or (alt and app.features.is_enabled("ai_chat")):
+            chat = app.features.get("ai_chat")
+            if chat is not None:
+                chat.open_input(voice=alt)
+        elif action == "settings":
             app.open_settings()
         elif action == "call":
             app.call_pet()

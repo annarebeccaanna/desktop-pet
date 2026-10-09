@@ -8,6 +8,7 @@ datas = [
     ("desktop_pets/assets", "desktop_pets/assets"),
     ("desktop_pets/themes", "desktop_pets/themes"),
     ("desktop_pets/win/share_signatures.json", "desktop_pets/win"),
+    ("desktop_pets/features/ai/providers/oneai.json", "desktop_pets/features/ai/providers"),
 ]
 
 a = Analysis(
@@ -15,7 +16,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=datas,
-    hiddenimports=["PySide6.QtMultimedia"],
+    hiddenimports=["PySide6.QtMultimedia", "keyring.backends.Windows", "anthropic"],
     excludes=["tkinter", "PySide6.QtWebEngineCore", "PySide6.QtQml", "PySide6.QtQuick", "PySide6.Qt3DCore"],
     noarchive=False,
 )
