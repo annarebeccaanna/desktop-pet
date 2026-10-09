@@ -373,6 +373,7 @@ class SettingsDialog(RetroWindow):
         self._status_timer.start(2000)
         self.app.bus.subscribe("mode_changed", self._on_mode_changed)
         self.app.bus.subscribe("feature_toggled", self._on_feature_toggled)
+        self.app.bus.subscribe("settings_changed", self._on_settings_changed)
         self.resize(760, 664)
         self._refresh_all()
 
@@ -802,6 +803,19 @@ class SettingsDialog(RetroWindow):
             self._building = False
         self._update_status()
 
+    def _on_settings_changed(self, key: str, value) -> None:  # noqa: ARG002
+        """Copilot-Taste lässt sich in zwei Tabs einstellen (Allgemein, KI) – beide aktuell halten."""
+        if key.startswith("general.copilot") and self.isVisible() and not self._building:
+            self._building = True
+            try:
+                self.cb_copilot.setChecked(bool(self.settings.get("general.copilot_key")))
+                idx = self.combo_copilot.findData(self.settings.get("general.copilot_action", "settings"))
+                self.combo_copilot.setCurrentIndex(max(0, idx))
+                self._refresh_copilot_status()
+            finally:
+                self._building = False
+            self.ai_tab.refresh()
+
     def _on_feature_toggled(self, feature_id: str, enabled: bool) -> None:  # noqa: ARG002
         if self.isVisible():
             self._building = True
@@ -1163,6 +1177,7 @@ class SettingsDialog(RetroWindow):
         self._status_timer.stop()
         self.app.bus.unsubscribe("mode_changed", self._on_mode_changed)
         self.app.bus.unsubscribe("feature_toggled", self._on_feature_toggled)
+        self.app.bus.unsubscribe("settings_changed", self._on_settings_changed)
         self.app._settings_dialog = None
         self.deleteLater()
         super().closeEvent(e)

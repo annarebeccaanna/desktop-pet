@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.1 – Copilot-Taste öffnet den Chat
+
+- **Behoben:** Die Copilot-Taste öffnete nach dem Einrichten des KI-Chats weiter die Einstellungen, weil die gespeicherte Aktion noch „Einstellungen öffnen“ war. Beim ersten Einschalten des KI-Chats wechselt die Aktion jetzt automatisch auf „KI-Chat öffnen“. Wer danach bewusst etwas anderes wählt, behält das.
+- Die Copilot-Einstellung in den Tabs „Allgemein“ und „KI“ bleibt jetzt synchron.
+
+Tests: 186.
+
 ## 0.9.0 – Phase 5: KI-Chat, Körbchen immer da
 
 **KI-Chat** (Funktion `ai_chat`, Einstellungen → neuer Tab **KI**)

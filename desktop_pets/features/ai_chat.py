@@ -117,6 +117,15 @@ class AIChat(Feature):
     def windows(self) -> list:
         return [self.input] if self.input is not None else []
 
+    def enable(self) -> None:
+        # Beim ersten Einschalten übernimmt die Copilot-Taste den Chat – vorher war
+        # „Einstellungen öffnen“ nur deshalb Standard, weil es noch keinen Chat gab.
+        settings = self.ctx.settings
+        if not settings.get("ai.copilot_switched"):
+            settings.set("ai.copilot_switched", True)
+            if settings.get("general.copilot_action", "settings") == "settings":
+                settings.set("general.copilot_action", "ai_chat")
+
     def disable(self) -> None:
         self._request += 1          # laufende Antworten verwerfen
         self.busy = False
