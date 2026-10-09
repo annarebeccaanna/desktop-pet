@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.9.3 – Spracheingabe ohne Fenster, „Antworten“ per Sprache
+
+- **Spracheingabe ohne Fenster** (Standard): Alt + Copilot nutzt jetzt die Windows-Spracherkennung direkt im Hintergrund, ohne das Win+H-Fenster.
+  - Das Gesagte erscheint live in der Eingabe-Blase und geht automatisch ab, sobald man 1,6 Sekunden nichts sagt.
+  - 🎤 in der Blase = nochmal sprechen. Wer zu tippen anfängt, beendet das Zuhören.
+  - Voraussetzung in Windows: „Online-Spracherkennung“ (Einstellungen → Datenschutz → Spracherkennung) und Mikrofonzugriff für Desktop-Apps. Fehlt das, sagt die Blase, woran es liegt, und nimmt automatisch Win + H.
+  - Umschaltbar im Tab KI → „Spracheingabe“: „Ohne Fenster“ oder „Mit Windows-Fenster (Win + H)“.
+  - Neue Pakete (nur Windows): `winrt-…` für die Spracherkennung.
+- **„Antworten“ bleibt bei der Spracheingabe:** Wurde der Chat per Sprache gestartet, startet „Antworten“ wieder mit Spracheingabe.
+- **Bessere Fehlermeldungen beim Verbindungstest:**
+  - Sie unterscheiden 401 (Key abgelehnt) von 403 (keine Berechtigung).
+  - Sie nennen die aufgerufene Adresse.
+  - Sie erkennen, wenn statt der Schnittstelle eine Webseite antwortet, zum Beispiel ein Firmen-Proxy oder eine falsche Adresse.
+- **oneAI:** Wird ein Key auf dem erwarteten Weg (Hub bzw. Gateway) abgelehnt, wird automatisch der andere Weg probiert und gemerkt.
+
+Tests: 199.
+
+- [x] oneAI über eigene (Staging-)Adresse geprüft – läuft.
+- [ ] **Auf Windows prüfen:** Alt + Copilot → kein Win+H-Fenster, Gesprochenes erscheint in der Blase und geht ab.
+- [ ] **Auf Windows prüfen:** „Antworten“ nach einer Sprach-Frage → wieder Spracheingabe.
+- [ ] **Auf Windows prüfen:** Online-Spracherkennung aus → Hinweis in der Blase, Win + H springt ein.
+
 ## 0.9.2 – oneAI richtig angebunden, Copilot-Taste ohne „Einstellungen öffnen“
 
 - **Copilot-Taste:** Die Aktion „Einstellungen öffnen“ ist entfernt – sie war nur zum Testen. Standard ist „KI-Chat öffnen“, alte Einstellungen werden umgestellt (Migration v6). Häkchen im Tab KI entfernen → die Taste gehört wieder Windows.

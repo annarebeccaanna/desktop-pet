@@ -59,6 +59,7 @@ DEFAULTS: dict[str, Any] = {
         "models": {},         # Anbieter -> Modell
         "base_urls": {},      # Anbieter -> Basis-URL (OneAI, eigener Endpunkt)
         "personality": {},    # pet_id -> eigener Persönlichkeits-Text
+        "voice_engine": "silent",  # Spracheingabe: "silent" (ohne Fenster) oder "winh" (Win + H)
     },
     "theme": "retro_xp",
     "bed": {

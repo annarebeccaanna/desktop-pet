@@ -57,6 +57,7 @@ class AIChat(Feature):
         self.input: ChatInput | None = None
         self.provider_factory = make_provider        # in Tests ersetzbar
         self.busy = False
+        self.voice_mode = False
         self._request = 0
         self._last_answer = ""
         self._bridge = _Bridge()
@@ -178,7 +179,10 @@ class AIChat(Feature):
         app.brain.task = None
         app.brain.target_x = None
         app.brain.set_state(State.SIT, 60)       # hinsetzen und zuhören
-        self._ensure_input().open(f"Frag {app.pet_name}", app.pet_window.head_anchor(), voice=voice)
+        self.voice_mode = voice                 # „Antworten“ bleibt dann auch bei der Spracheingabe
+        silent = self.ctx.settings.get("ai.voice_engine", "silent") != "winh"
+        self._ensure_input().open(f"Frag {app.pet_name}", app.pet_window.head_anchor(), voice=voice,
+                                  silent=silent)
 
     def send(self, text: str) -> None:
         app = self.ctx.app
@@ -228,7 +232,7 @@ class AIChat(Feature):
         shown = answer if len(answer) <= MAX_SHOWN else answer[:MAX_SHOWN].rstrip() + " … (Kopieren für alles)"
         app.brain.set_state(State.SIT, 8)
         app.say(app.pet_name, shown, min(90.0, 10 + len(shown) / 15), wide=True, buttons=[
-            ("Antworten", lambda: self.open_input(voice=False), True),
+            ("Antworten", lambda: self.open_input(voice=self.voice_mode), True),
             ("Kopieren", self.copy_answer, False),
         ])
         app.sound.play(app.pack.sounds.get("call"), app.pack.path)

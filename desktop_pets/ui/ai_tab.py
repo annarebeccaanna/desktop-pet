@@ -137,13 +137,22 @@ class AITab(QWidget):
             change = QPushButton("Ändern …", chat)
             change.clicked.connect(edit.start)
             cg.addWidget(change, 2 + i, 2)
+        cg.addWidget(QLabel("Spracheingabe:", chat), 4, 0)
+        self.combo_voice = QComboBox(chat)
+        self.combo_voice.addItem("Ohne Fenster (Windows-Spracherkennung)", "silent")
+        self.combo_voice.addItem("Mit Windows-Fenster (Win + H)", "winh")
+        self.combo_voice.setToolTip("„Ohne Fenster“ braucht in Windows die Online-Spracherkennung\n"
+                                    "(Einstellungen → Datenschutz → Spracherkennung). Klappt das nicht,\n"
+                                    "nimmt Desktop Pets automatisch Win + H.")
+        self.combo_voice.currentIndexChanged.connect(self._on_voice_engine)
+        cg.addWidget(self.combo_voice, 4, 1, 1, 2)
         cg.setColumnStretch(3, 1)
         note = QLabel("Gesendet wird nur, was du eintippst oder sagst – nie Fenstertitel oder Screenshots. "
-                      "Der Chat wird nicht gespeichert und ist im Pause-Modus aus. Die Spracheingabe nutzt "
-                      "die Windows-Spracheingabe (Win + H).", chat)
+                      "Der Chat wird nicht gespeichert und ist im Pause-Modus aus. Gesprochenes wandelt "
+                      "Windows selbst in Text um.", chat)
         note.setObjectName("muted")
         note.setWordWrap(True)
-        cg.addWidget(note, 4, 0, 1, 4)
+        cg.addWidget(note, 5, 0, 1, 4)
         lay.addWidget(chat)
 
         # ---------- Persönlichkeit ----------
@@ -184,6 +193,8 @@ class AITab(QWidget):
                 edit.set_value(self.settings.get(f"hotkeys.{name}", ""))
             self.cb_copilot.setChecked(bool(self.settings.get("general.copilot_key"))
                                        and self.settings.get("general.copilot_action") == "ai_chat")
+            self.combo_voice.setCurrentIndex(max(0, self.combo_voice.findData(
+                self.settings.get("ai.voice_engine", "silent"))))
             self.pers_box.setTitle(f"Persönlichkeit von {self.app.pet_name}")
             self.personality.setPlainText(self.feature.personality() if self.feature else "")
         finally:
@@ -328,6 +339,10 @@ class AITab(QWidget):
             self.settings.set("general.copilot_key", True)
         elif self.settings.get("general.copilot_action") == "ai_chat":
             self.settings.set("general.copilot_key", False)      # Taste gehört wieder Windows
+
+    def _on_voice_engine(self, _i: int) -> None:
+        if not self._building:
+            self.settings.set("ai.voice_engine", self.combo_voice.currentData())
 
     def _on_personality(self) -> None:
         if not self._building:

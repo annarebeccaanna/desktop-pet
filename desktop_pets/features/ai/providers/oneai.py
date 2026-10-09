@@ -18,7 +18,7 @@ from pathlib import Path
 
 from ....core.log import get_logger
 from .base import AIError, AIProvider, Message, ProviderInfo
-from .openai_compat import OpenAICompatProvider, _error_text, _http
+from .openai_compat import OpenAICompatProvider, _error_text, _http, not_api
 
 log = get_logger("ai.oneai")
 CONFIG = Path(__file__).with_name("oneai.json")
@@ -50,6 +50,10 @@ INFO = ProviderInfo(
 # Laufende Hub-Chats: (Hub, Key-Ende) -> Chat-ID. Ein neues Gespräch (erste Nachricht) legt
 # einen neuen Chat an; danach geht es im selben Chat weiter.
 _CHATS: dict[tuple[str, str], str] = {}
+# Welcher Weg mit diesem Key tatsächlich funktioniert hat ("hub" oder "gateway") –
+# falls das Präfix nicht zur Freischaltung passt.
+_MODE: dict[tuple[str, str], str] = {}
+RETRY_OTHER = (401, 403, 404, 405)
 
 
 def hub_root(url: str) -> str:
@@ -69,7 +73,14 @@ class OneAIProvider(AIProvider):
         self.hub = hub_root(self.base_url)
 
     @property
+    def slot(self) -> tuple[str, str]:
+        return (self.hub, self.api_key[-6:])
+
+    @property
     def gateway(self) -> bool:
+        mode = _MODE.get(self.slot)
+        if mode:
+            return mode == "gateway"
         return self.api_key.startswith(GATEWAY_PREFIX)
 
     def _gateway(self) -> OpenAICompatProvider:
@@ -84,8 +95,8 @@ class OneAIProvider(AIProvider):
         url = f"{self.hub}{path}"
         status, payload = http(method, url, {"Authorization": f"Bearer {self.api_key}",
                                              "Accept": "application/json"}, body)
-        if status >= 400:
-            raise _HubError(status, self.scrub(_error_text(status, payload if isinstance(payload, dict) else {}, url)))
+        if status >= 400 or not_api(payload):
+            raise _HubError(status, self.scrub(_error_text(status, payload, url)))
         return payload
 
     def _hub_models(self) -> list[dict]:
@@ -151,19 +162,48 @@ class OneAIProvider(AIProvider):
         return str(reply).strip()
 
     def test_connection(self) -> str:
-        if self.gateway:
+        first = "gateway" if self.gateway else "hub"
+        try:
+            return self._test(first)
+        except AIError as exc:
+            status = getattr(exc, "status", None) or _status_of(exc)
+            if status not in RETRY_OTHER:
+                raise
+            other = "hub" if first == "gateway" else "gateway"
+            try:
+                result = self._test(other)
+            except AIError as exc2:
+                raise AIError(f"{exc}\n(Auch über {'das Gateway' if other == 'gateway' else 'den Hub'}: {exc2})") from None
+            _MODE[self.slot] = other
+            return result
+
+    def _test(self, mode: str) -> str:
+        if mode == "gateway":
             gw = self._gateway()
-            result = gw.test_connection()
+            try:
+                result = gw.test_connection()
+            except AIError as exc:
+                raise _HubError(_status_of(exc), str(exc)) from None
             self.models_found, self.model = gw.models_found, gw.model
+            _MODE[self.slot] = "gateway"
             return result.replace("Verbunden ✓", "Verbunden ✓ Gateway")
         self._call("GET", "/api/auth/check")
         names = [str(m["id"]) for m in self._hub_models()]
+        _MODE[self.slot] = "hub"
         self.models_found = names
         if not self.model and names:
             self.model = names[0]
         if names and self.model not in names:
             return f"Verbunden – aber das Modell „{self.model}“ ist im Hub nicht freigeschaltet. Bitte eins aus der Liste wählen."
         return f"Verbunden ✓ Hub ({self.hub}, {self.model or 'kein Modell freigeschaltet'})"
+
+
+def _status_of(exc: Exception) -> int | None:
+    """HTTP-Status aus einer Fehlermeldung wie „… (401 – https://…)“."""
+    import re
+
+    m = re.search(r"\b(4\d\d|5\d\d)\b", str(exc))
+    return int(m.group(1)) if m else None
 
 
 class _HubError(AIError):

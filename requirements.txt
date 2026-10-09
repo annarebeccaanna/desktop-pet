@@ -1,3 +1,9 @@
 PySide6>=6.6
 anthropic>=1.0       # KI-Chat mit Claude
 keyring>=25          # API-Keys im Windows-Anmeldeinformationsspeicher
+# Spracheingabe ohne Fenster (Windows-Spracherkennung)
+winrt-runtime>=3; sys_platform == "win32"
+winrt-Windows.Foundation>=3; sys_platform == "win32"
+winrt-Windows.Foundation.Collections>=3; sys_platform == "win32"
+winrt-Windows.Globalization>=3; sys_platform == "win32"
+winrt-Windows.Media.SpeechRecognition>=3; sys_platform == "win32"

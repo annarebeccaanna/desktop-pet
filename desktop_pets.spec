@@ -16,7 +16,10 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=datas,
-    hiddenimports=["PySide6.QtMultimedia", "keyring.backends.Windows", "anthropic"],
+    hiddenimports=["PySide6.QtMultimedia", "keyring.backends.Windows", "anthropic",
+                   "winrt._winrt", "winrt.system", "winrt.windows.foundation",
+                   "winrt.windows.foundation.collections", "winrt.windows.globalization",
+                   "winrt.windows.media.speechrecognition"],
     excludes=["tkinter", "PySide6.QtWebEngineCore", "PySide6.QtQml", "PySide6.QtQuick", "PySide6.Qt3DCore"],
     noarchive=False,
 )

@@ -439,3 +439,127 @@ def test_copilot_settings_stay_in_sync_between_tabs(pa):
     dlg.combo_copilot.setCurrentIndex(dlg.combo_copilot.findData("pause"))
     assert not dlg.ai_tab.cb_copilot.isChecked()
     dlg.close()
+
+
+def test_reply_keeps_voice_mode(pa, monkeypatch):
+    chat = pa.features.get("ai_chat")
+    chat.keys.set("anthropic", KEY)
+    pa.settings.set("ai.provider", "anthropic")
+    pa.features.set_enabled("ai_chat", True)
+    chat.provider_factory = lambda *a, **k: _Instant()
+    for voice in (True, False):
+        chat.open_input(voice=voice)
+        chat.input.close_input()
+        chat.send("Hallo")
+        wait_answer(chat)
+        opened = []
+        monkeypatch.setattr(chat, "open_input", lambda voice=False, o=opened: o.append(voice))
+        reply = [b for b in pa.bubble.findChildren(QtWidgets.QPushButton) if b.text() == "Antworten"][-1]
+        reply.click()
+        assert opened == [voice]
+        monkeypatch.undo()
+
+
+def test_oneai_falls_back_to_the_other_way_when_rejected():
+    from desktop_pets.features.ai.providers import oneai
+
+    oneai._MODE.clear()
+
+    def hub(method, url, headers, body):
+        if "/api/auth/check" in url:
+            return 401, {"message": "unauthorized"}
+        if url.endswith("/api/openai/v1/models"):
+            return 200, {"data": [{"id": "gw"}]}
+        return 404, {}
+
+    p = make_provider("oneai", "oai_xyz123", base_url="https://staging.example", transport=hub)
+    assert "Gateway" in p.test_connection()
+    assert make_provider("oneai", "oai_xyz123", base_url="https://staging.example", transport=hub).gateway
+
+
+def test_web_page_instead_of_api_is_explained():
+    p = make_provider("openai", "k", transport=lambda *a: (200, {"_raw": "<html>Zugriff gesperrt</html>", "_type": "text/html"}))
+    with pytest.raises(AIError, match="Webseite"):
+        p.test_connection()
+
+
+# ---------- Spracheingabe ohne Fenster ----------
+@pytest.fixture
+def chat_input(monkeypatch):
+    qapp = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])  # noqa: F841
+    from PySide6.QtCore import QPoint
+
+    from desktop_pets.ui import chat_input as ci_mod
+    from desktop_pets.win import input as win_input
+    from desktop_pets.win import speech
+
+    started, winh = [], []
+    monkeypatch.setattr(win_input, "voice_supported", lambda: True)
+    monkeypatch.setattr(speech, "available", lambda: True)
+    monkeypatch.setattr(speech.Dictation, "start", lambda self: started.append(1) or True)
+    monkeypatch.setattr(ci_mod.ChatInput, "_start_winh", lambda self: (winh.append(1), setattr(self, "mode", "winh")))
+    ci = ci_mod.ChatInput()
+    sent = []
+    ci.submitted.connect(sent.append)
+    ci.open("Frag Mieze", QPoint(500, 500), voice=True)
+    yield ci, started, winh, sent
+    ci.close_input()
+
+
+def test_silent_voice_shows_live_text_and_sends_at_the_end(chat_input):
+    ci, started, winh, sent = chat_input
+    assert ci.mode == "silent" and started == [1] and winh == [] and ci.btn_mic.isVisibleTo(ci)
+    ci._heard_partial.emit("Wie spät")
+    assert ci.line.text() == "Wie spät" and sent == []
+    ci._heard_final.emit("Wie spät ist es?")
+    assert sent == ["Wie spät ist es?"] and not ci.isVisible()
+
+
+def test_silent_voice_falls_back_to_win_h_when_windows_refuses(chat_input):
+    from desktop_pets.win import speech
+
+    ci, started, winh, sent = chat_input
+    ci._heard_error.emit(speech.PRIVACY)
+    assert winh == [1] and "Online-Spracherkennung" in ci.hint.text()
+
+
+def test_nothing_heard_offers_microphone_button(chat_input):
+    from desktop_pets.win import speech
+
+    ci, started, winh, sent = chat_input
+    ci._heard_error.emit(speech.NOTHING)
+    assert "nichts gehört" in ci.hint.text() and winh == []
+    ci.btn_mic.click()
+    assert started == [1, 1] and ci.mode == "silent"
+
+
+def test_typing_stops_listening(chat_input):
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+
+    ci, started, winh, sent = chat_input
+    QTest.keyClick(ci.line, Qt.Key_A)
+    assert ci.mode == ""
+    ci._heard_partial.emit("soll nicht mehr ankommen")
+    assert ci.line.text() == "a"
+
+
+def test_voice_engine_setting_is_respected(pa, monkeypatch):
+    from desktop_pets.win import input as win_input
+    from desktop_pets.win import speech
+
+    monkeypatch.setattr(win_input, "voice_supported", lambda: True)
+    monkeypatch.setattr(speech, "available", lambda: True)
+    monkeypatch.setattr(speech.Dictation, "start", lambda self: True)
+    monkeypatch.setattr(win_input, "start_dictation", lambda: True)
+    chat = pa.features.get("ai_chat")
+    chat.keys.set("anthropic", KEY)
+    pa.settings.set("ai.provider", "anthropic")
+    pa.features.set_enabled("ai_chat", True)
+    chat.open_input(voice=True)
+    assert chat.input.mode == "silent"
+    chat.input.close_input()
+    pa.settings.set("ai.voice_engine", "winh")
+    chat.open_input(voice=True)
+    assert chat.input.mode == "winh"
+    chat.input.close_input()

@@ -1,9 +1,13 @@
 """Eingabe-Sprechblase für den KI-Chat – geht vom Tier aus.
 
 * Enter schickt die Frage ab, Esc schließt.
-* Spracheingabe (Alt + Copilot): Die Blase holt sich den Fokus und startet die
-  Windows-Spracheingabe (Win + H), die direkt ins Feld schreibt. Sobald eine Weile
-  nichts Neues mehr dazukommt, wird automatisch abgeschickt (Enter = sofort).
+* Spracheingabe (Alt + Copilot):
+  - Standard „ohne Fenster“: Die Windows-Spracherkennung hört im Hintergrund zu
+    (win/speech.py), das Gesagte erscheint live im Feld und geht ab, sobald man
+    kurz nichts mehr sagt.
+  - Rückfall oder auf Wunsch: Windows-Spracheingabe (Win + H, mit ihrem Fenster),
+    die ins Feld schreibt; nach 2,5 s ohne neue Wörter wird abgeschickt.
+  Enter = sofort senden, Esc = abbrechen, 🎤 = nochmal sprechen.
 
 Anders als die normale Sprechblase nimmt dieses Fenster den Tastaturfokus an.
 """
@@ -12,9 +16,10 @@ from __future__ import annotations
 
 from PySide6.QtCore import QPoint, QRect, QTimer, Qt, Signal
 from PySide6.QtGui import QKeyEvent, QPainter, QPen
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from ..win import input as win_input
+from ..win import speech
 from . import theme as theme_mod
 from .retro import balloon_path, pixel_label
 from .speech_bubble import PAD, TAIL, _CloseX, bubble_position
@@ -25,17 +30,33 @@ VOICE_WAIT_KEYS = 2.0       # s: so lange auf das Loslassen von Alt/Win/Umschalt
 
 class _Line(QLineEdit):
     escape = Signal()
+    typed = Signal()                  # Mensch tippt selbst → Zuhören beenden
 
     def keyPressEvent(self, e: QKeyEvent) -> None:  # noqa: N802
         if e.key() == Qt.Key_Escape:
             self.escape.emit()
             return
+        if e.key() not in (Qt.Key_Return, Qt.Key_Enter):
+            self.typed.emit()
         super().keyPressEvent(e)
+
+
+SPEECH_HINTS = {
+    speech.PRIVACY: "Für die Spracheingabe ohne Fenster in Windows „Online-Spracherkennung“ einschalten "
+                    "(Einstellungen → Datenschutz → Spracherkennung). Solange nehme ich Win + H.",
+    speech.LANGUAGE: "Die Windows-Spracherkennung kennt deine Sprache nicht – ich nehme Win + H.",
+    speech.FAILED: "Die Spracherkennung ohne Fenster klappt gerade nicht – ich nehme Win + H.",
+    speech.MICROPHONE: "Kein Mikrofon gefunden oder kein Zugriff (Windows → Datenschutz → Mikrofon).",
+    speech.NOTHING: "Ich habe nichts gehört. 🎤 = nochmal sprechen, oder einfach tippen.",
+}
 
 
 class ChatInput(QWidget):
     submitted = Signal(str)
     closed = Signal()
+    _heard_partial = Signal(str)      # aus dem Spracherkennungs-Thread
+    _heard_final = Signal(str)
+    _heard_error = Signal(str)
 
     def __init__(self) -> None:
         super().__init__(None, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool
@@ -44,7 +65,13 @@ class ChatInput(QWidget):
         self.setWindowTitle("Desktop Pets – KI-Chat")
         self._tail_local: QPoint | None = None
         self.voice = False
+        self.mode = ""                # "silent" (ohne Fenster), "winh" oder "" (tippen)
         self._waited = 0.0
+        self._heard_partial.connect(self._on_partial)
+        self._heard_final.connect(self._on_final)
+        self._heard_error.connect(self._on_speech_error)
+        self.dictation = speech.Dictation(self._heard_partial.emit, self._heard_final.emit,
+                                          self._heard_error.emit)
 
         t = theme_mod.current()
         outer = QVBoxLayout(self)
@@ -65,7 +92,17 @@ class ChatInput(QWidget):
         self.line.returnPressed.connect(self._submit)
         self.line.escape.connect(self.close_input)
         self.line.textChanged.connect(self._on_text_changed)
-        outer.addWidget(self.line)
+        self.line.typed.connect(self._stop_listening)
+        row = QHBoxLayout()
+        row.setSpacing(6)
+        row.addWidget(self.line, 1)
+        self.btn_mic = QPushButton("🎤", self)
+        self.btn_mic.setToolTip("Nochmal sprechen")
+        self.btn_mic.setFixedWidth(34)
+        self.btn_mic.setFocusPolicy(Qt.NoFocus)
+        self.btn_mic.clicked.connect(self._listen_again)
+        row.addWidget(self.btn_mic)
+        outer.addLayout(row)
         self.hint = QLabel("", self)
         self.hint.setObjectName("muted")
         self.hint.setFont(t.ui_font(8))
@@ -82,12 +119,15 @@ class ChatInput(QWidget):
         self._keys_timer.timeout.connect(self._wait_for_keys)
 
     # ---------- öffentlich ----------
-    def open(self, title: str, anchor: QPoint, voice: bool = False) -> None:
+    def open(self, title: str, anchor: QPoint, voice: bool = False, silent: bool = True) -> None:
+        self.dictation.cancel()
         self.voice = voice and win_input.voice_supported()
+        self.mode = ("silent" if silent and speech.available() else "winh") if self.voice else ""
+        self.btn_mic.setVisible(self.voice)
         self.title.setText(title.upper())
         self.line.clear()
         if self.voice:
-            self.line.setPlaceholderText("Sprich jetzt …")
+            self.line.setPlaceholderText("Ich höre zu … sprich jetzt")
             self.hint.setText("Ich schicke es ab, sobald du fertig bist. Enter = sofort, Esc = abbrechen.")
         else:
             self.line.setPlaceholderText("Frag mich etwas …")
@@ -102,9 +142,10 @@ class ChatInput(QWidget):
         self.activateWindow()
         win_input.force_foreground(int(self.winId()))
         self.line.setFocus(Qt.OtherFocusReason)
-        if self.voice:
-            self._waited = 0.0
-            self._keys_timer.start()
+        if self.mode == "silent":
+            self.dictation.start()
+        elif self.mode == "winh":
+            self._start_winh()
 
     def follow(self, anchor: QPoint) -> None:
         x, y = bubble_position(anchor, self.width(), self.height())
@@ -113,6 +154,7 @@ class ChatInput(QWidget):
         self.update()
 
     def close_input(self) -> None:
+        self.dictation.cancel()
         self._send_timer.stop()
         self._keys_timer.stop()
         if self.isVisible():
@@ -120,6 +162,46 @@ class ChatInput(QWidget):
             self.closed.emit()
 
     # ---------- intern ----------
+    def _start_winh(self) -> None:
+        self.mode = "winh"
+        self._waited = 0.0
+        self._keys_timer.start()
+
+    def _stop_listening(self) -> None:
+        """Wer tippt, will nicht mehr sprechen."""
+        if self.mode == "silent":
+            self.dictation.cancel()
+        self._send_timer.stop()
+        self.mode = ""
+
+    def _listen_again(self) -> None:
+        self.line.clear()
+        self.hint.setText("Ich höre zu … Enter = sofort senden, Esc = abbrechen.")
+        if speech.available() and self.mode != "winh":
+            self.mode = "silent"
+            self.dictation.cancel()
+            self.dictation.start()
+        else:
+            self._start_winh()
+
+    def _on_partial(self, text: str) -> None:
+        if self.isVisible() and self.mode == "silent":
+            self.line.setText(text)
+
+    def _on_final(self, text: str) -> None:
+        if self.isVisible() and self.mode == "silent":
+            self.line.setText(text)
+            self._submit()
+
+    def _on_speech_error(self, reason: str) -> None:
+        if not self.isVisible() or self.mode != "silent":
+            return
+        self.hint.setText(SPEECH_HINTS.get(reason, SPEECH_HINTS[speech.FAILED]))
+        if reason in (speech.PRIVACY, speech.LANGUAGE, speech.FAILED):
+            self._start_winh()               # Rückfall: Windows-Spracheingabe mit Fenster
+        else:
+            self.mode = ""
+
     def _wait_for_keys(self) -> None:
         """Erst wenn Alt/Win/Umschalt los sind, Win + H schicken – sonst wird es eine andere Kombination."""
         self._waited += 0.05
@@ -131,10 +213,11 @@ class ChatInput(QWidget):
         win_input.start_dictation()
 
     def _on_text_changed(self, text: str) -> None:
-        if self.voice and text.strip():
+        if self.mode == "winh" and text.strip():
             self._send_timer.start(int(VOICE_SEND_AFTER * 1000))
 
     def _submit(self) -> None:
+        self.dictation.cancel()
         self._send_timer.stop()
         text = self.line.text().strip()
         if not text:

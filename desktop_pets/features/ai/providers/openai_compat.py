@@ -12,38 +12,56 @@ from .base import AIError, AIProvider, Message
 TIMEOUT = 60
 
 
-def _http(method: str, url: str, headers: dict[str, str], body: dict | None) -> tuple[int, dict]:
+def _parse(raw: bytes, content_type: str) -> dict | list:
+    text = raw.decode("utf-8", errors="replace")
+    try:
+        return json.loads(text or "{}")
+    except ValueError:
+        # Keine API-Antwort (z. B. Webseite, Anmeldeseite oder Sperrseite eines Firmen-Proxys)
+        snippet = " ".join(text.split())[:160]
+        return {"_raw": snippet, "_type": content_type}
+
+
+def _http(method: str, url: str, headers: dict[str, str], body: dict | None) -> tuple[int, dict | list]:
     data = json.dumps(body).encode("utf-8") if body is not None else None
     req = urllib.request.Request(url, data=data, method=method,
-                                 headers={"Content-Type": "application/json", **headers})
+                                 headers={"Content-Type": "application/json", "Accept": "application/json",
+                                          "User-Agent": "DesktopPets", **headers})
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-            return resp.status, json.loads(resp.read().decode("utf-8") or "{}")
+            return resp.status, _parse(resp.read(), resp.headers.get("Content-Type", ""))
     except urllib.error.HTTPError as exc:
-        try:
-            payload = json.loads(exc.read().decode("utf-8") or "{}")
-        except ValueError:
-            payload = {}
-        return exc.code, payload
+        return exc.code, _parse(exc.read(), exc.headers.get("Content-Type", "") if exc.headers else "")
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         raise AIError(f"Keine Verbindung zu {url.split('/')[2] if '//' in url else url} ({exc}).") from None
 
 
-def _error_text(status: int, payload: dict, url: str = "") -> str:
-    err = payload.get("error") if isinstance(payload, dict) else None
+def not_api(payload) -> bool:
+    """Kam statt JSON eine Webseite zurück?"""
+    return isinstance(payload, dict) and "_raw" in payload
+
+
+def _error_text(status: int, payload, url: str = "") -> str:
+    payload = payload if isinstance(payload, dict) else {}
+    err = payload.get("error")
     detail = err.get("message") if isinstance(err, dict) else (err if isinstance(err, str) else "")
-    if not detail and isinstance(payload, dict):
+    if not detail:
         detail = str(payload.get("message") or payload.get("detail") or "")
-    if status in (401, 403):
-        return "Der API-Key wurde abgelehnt. Bitte prüfen."
+    where = f" – {url}" if url else ""
+    if not_api(payload):
+        return (f"Fehler {status}{where}: Die Antwort kam nicht von der KI-Schnittstelle, sondern war eine "
+                f"Webseite (z. B. Firmen-Proxy oder falsche Adresse): „{payload['_raw']}“")
+    if status == 401:
+        return f"Der API-Key wurde abgelehnt (401{where}). {detail}".strip()
+    if status == 403:
+        return f"Zugriff verweigert (403{where}). Key gültig, aber ohne Berechtigung? {detail}".strip()
     if status == 404:
-        where = f" ({url})" if url else ""
-        return f"Adresse oder Modell nicht gefunden{where}. Basis-URL und Modell prüfen. {detail}".strip()
+        return f"Adresse oder Modell nicht gefunden (404{where}). Basis-URL und Modell prüfen. {detail}".strip()
     if status == 429:
         return "Zu viele Anfragen oder Guthaben aufgebraucht – bitte später noch einmal."
     if status >= 500:
-        return f"Der Anbieter hat gerade Probleme (Fehler {status})."
-    return f"Fehler {status}: {detail}".strip()
+        return f"Der Anbieter hat gerade Probleme (Fehler {status}{where})."
+    return f"Fehler {status}{where}: {detail}".strip()
 
 
 class OpenAICompatProvider(AIProvider):
@@ -60,7 +78,7 @@ class OpenAICompatProvider(AIProvider):
         http = self.transport or _http
         url = f"{self.base_url}{path}"
         status, payload = http(method, url, self._headers(), body)
-        if status >= 400:
+        if status >= 400 or not_api(payload):
             raise AIError(self.scrub(_error_text(status, payload, url)))
         return payload if isinstance(payload, (dict, list)) else {}
 
