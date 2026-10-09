@@ -12,6 +12,7 @@ from .base import Feature, Option, register
 START_SPEED = 250.0     # px/s: so schnell muss der Zeiger sein, damit die Jagd losgeht
 NEAR = 28.0             # px: „unter dem Zeiger“
 CATCH_HEIGHT = 220.0    # px: so hoch kann das Tier springen
+BELOW = 12.0            # px: Zeiger so weit unter den Füßen → liegt unterhalb der Fensterkante
 
 
 class ChaseBehaviour(Behaviour):
@@ -48,6 +49,18 @@ class ChaseBehaviour(Behaviour):
 
     def _chase(self, brain: Brain, dt: float, p: Perception, cx: float, cy: float) -> Intent:
         self.time_left -= dt
+        if self.time_left > 0 and p.on_window and (cx < p.walk_left or cx > p.walk_right or cy > p.y + BELOW):
+            # Zeiger neben oder unter dem Fenster: über die Kante hinterher – und nach der
+            # Landung gleich weiterjagen
+            if p.walk_left <= cx <= p.walk_right:
+                go_left = cx - p.walk_left <= p.walk_right - cx
+                brain.target_x = p.walk_left - p.height * 2 if go_left else p.walk_right + p.height * 2
+            else:
+                brain.target_x = cx
+            brain.after_landing = State.RUN
+            return brain.walk_towards(brain.target_x, p, run=True, on_arrive=lambda: None)
+        if brain.after_landing == State.RUN:
+            brain.after_landing = None
         brain.target_x = min(max(cx, p.walk_left), p.walk_right)
         dx = cx - p.x
         near = abs(dx) < NEAR

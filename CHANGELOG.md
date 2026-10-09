@@ -16,9 +16,10 @@
   - **Behoben:** Das Tier lief bisher bei jeder fünften Entscheidung gleich wieder über die Kante. Jetzt bleibt es mindestens eine Minute oben, danach geht es nur gelegentlich hinunter.
   - Abends zieht es in den ersten 2 Minuten nach dem Absetzen nicht ins Körbchen um.
   - Klick-durchlässige Overlay-Fenster (z. B. Spiele- oder Aufnahme-Overlays) zählen nicht mehr als Fenster. Sie konnten alle Kanten „verdecken“.
+- **Mausjagd von Fenstern:** Ist der Zeiger neben oder unter dem Fenster, springt das Tier jetzt über die Kante hinterher und jagt nach der Landung weiter. Bisher blieb es an der Fensterkante stehen. Ist der Zeiger über dem Fenster, bleibt es oben.
 - Einstellungen: Schema v4.
 
-Tests: 152 (neu: Abhängigkeit Mausjagd/Herumstreunen samt Dialog, Vollbild-Schalter und Migration, Farben ohne Schalter, Körbchen rein/raus/hineinhüpfen, Nachricht weckt, Absetzen auf der Titelleiste, Verweildauer auf Fenstern).
+Tests: 155 (neu: Abhängigkeit Mausjagd/Herumstreunen samt Dialog, Vollbild-Schalter und Migration, Farben ohne Schalter, Körbchen rein/raus/hineinhüpfen, Nachricht weckt, Absetzen auf der Titelleiste, Verweildauer auf Fenstern, Mausjagd von der Fensterkante hinunter).
 
 - [ ] **Auf Windows prüfen:** Tier auf die Titelleiste eines (nicht maximierten) Fensters ziehen → bleibt oben.
 - [ ] **Auf Windows prüfen:** „Ins Körbchen schicken“ von weit weg und von einem Fenster aus → liegt im Körbchen, Doppelklick weckt.

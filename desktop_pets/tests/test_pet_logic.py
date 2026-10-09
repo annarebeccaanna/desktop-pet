@@ -412,3 +412,45 @@ def test_idle_sleep_releases_when_woken_otherwise():
     b.wake()                      # z. B. per Klick
     b.tick(1 / 30, perc(user_idle=0.5))
     assert not b.sleep_hold and not beh.holding
+
+
+def _chase_from_window(cursor, seconds=8):
+    """Gehirn + echte Physik: Tier jagt auf einer Fensterkante den Zeiger."""
+    from desktop_pets.pet.physics import Body, Platform, World
+
+    world = World()
+    world.set_platforms([Platform("screen", 0, 1920, 1040, solid=True), Platform("win", 600, 1100, 400)])
+    body = Body(x=850, y=400, width=48)
+    body.place_on(world.platforms["win"])
+    b = brain(9, playfulness=1.0, idle=False)
+    chase = b.behaviours[-1]
+    chase.cooldown = 0
+    chase.time_left = 10.0
+    b.set_state(State.RUN, 1e9)
+    fell = False
+    for _ in range(int(seconds * 30)):
+        left, right = world.walk_span(body)
+        on_window = body.support == "win"
+        intent = b.tick(1 / 30, perc(x=body.x, y=body.y, on_ground=body.on_ground, cursor=cursor,
+                                     cursor_speed=600, walk_left=left, walk_right=right,
+                                     on_window=on_window, height=48))
+        body.vx = intent.vx
+        world.step(body, 1 / 30)
+        fell = fell or body.support is None
+    return b, body, fell
+
+
+def test_mouse_chase_jumps_down_from_window_to_cursor_beside_it():
+    b, body, fell = _chase_from_window(cursor=(1500, 1000))
+    assert fell and body.support == "screen"
+    assert abs(body.x - 1500) < 60                       # nach der Landung weitergejagt
+
+
+def test_mouse_chase_jumps_down_when_cursor_is_below_window():
+    b, body, fell = _chase_from_window(cursor=(800, 900))
+    assert fell and body.support == "screen"
+
+
+def test_mouse_chase_stays_on_window_when_cursor_is_above_it():
+    b, body, fell = _chase_from_window(cursor=(900, 300), seconds=3)
+    assert not fell and body.support == "win"
