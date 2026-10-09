@@ -54,6 +54,8 @@ _CHATS: dict[tuple[str, str], str] = {}
 # Welcher Weg mit diesem Key tatsächlich funktioniert hat ("hub" oder "gateway") –
 # falls das Präfix nicht zur Freischaltung passt.
 _MODE: dict[tuple[str, str], str] = {}
+_USES: dict[tuple, int] = {}
+ONE_SHOT_ROTATE = 10
 RETRY_OTHER = (401, 403, 404, 405)
 
 
@@ -129,7 +131,7 @@ class OneAIProvider(AIProvider):
             return self._gateway().list_models()
         return [str(m["id"]) for m in self._hub_models()]
 
-    def chat(self, system: str, messages: list[Message]) -> str:
+    def chat(self, system: str, messages: list[Message], one_shot: bool = False) -> str:
         if self.gateway:
             return self._gateway().chat(system, messages)
         last = next((m.content for m in reversed(messages) if m.role == "user"), "")
@@ -141,11 +143,21 @@ class OneAIProvider(AIProvider):
         info = next((m for m in models if m.get("id") == self.model), None)
         # Eigener Hub-Chat je Rolle (Tier-Plauderei bzw. sachliche Anfragen)
         slot = (self.hub, self.api_key[-6:], hashlib.sha1(system.encode("utf-8")).hexdigest()[:8])
-        fresh = len([m for m in messages if m.role == "user"]) == 1 or slot not in _CHATS
+        if one_shot:
+            # Einzelaufträge teilen sich einen Hub-Chat (statt für jeden einen neuen anzulegen);
+            # nach ONE_SHOT_ROTATE Aufträgen gibt es einen frischen, damit der Verlauf nicht wächst.
+            _USES[slot] = _USES.get(slot, 0) + 1
+            fresh = slot not in _CHATS or _USES[slot] > ONE_SHOT_ROTATE
+            if fresh:
+                _USES[slot] = 1
+        else:
+            fresh = len([m for m in messages if m.role == "user"]) == 1 or slot not in _CHATS
         text = last
         if fresh:
             stamp = datetime.datetime.now().strftime("%d.%m.%Y %H:%M")
-            _CHATS[slot] = self._new_chat(f"Desktop Pets {stamp}")
+            title = "Desktop Pets Text-Werkzeuge" if one_shot else "Desktop Pets"
+            _CHATS[slot] = self._new_chat(f"{title} {stamp}")
+        if fresh or one_shot:
             text = f"{system}\n\n---\n\n{last}"       # der Hub kennt keinen Systemtext – vorn anhängen
         body = {"message": text, "model": self.model}
         if info and info.get("reasoning"):
@@ -156,7 +168,7 @@ class OneAIProvider(AIProvider):
             if exc.status != 404 or fresh:
                 raise
             _CHATS.pop(slot, None)                   # Chat im Hub gelöscht → neu anfangen
-            return self.chat(system, [Message("user", last)])
+            return self.chat(system, [Message("user", last)], one_shot=one_shot)
         if isinstance(answer, dict):
             reply = answer.get("response") or answer.get("text") or answer.get("message") or ""
         else:

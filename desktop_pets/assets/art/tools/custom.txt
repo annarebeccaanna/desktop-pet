@@ -1,0 +1,16 @@
+# Eigene Anweisung – Stift
+@color K #000000
+@color Y #F8C33A
+@color R #E2563A
+@color P #F4B8A0
+
+.......KK.
+......KRRK
+.....KYKRK
+....KYYYK.
+...KYYYK..
+..KYYYK...
+.KPYYK....
+.KPPK.....
+KKKK......
+..........

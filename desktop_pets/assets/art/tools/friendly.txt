@@ -1,0 +1,14 @@
+# Freundlicher – Smiley
+@color K #000000
+@color Y #F8C33A
+
+..KKKKKK..
+.KYYYYYYK.
+KYYKYYKYYK
+KYYKYYKYYK
+KYYYYYYYYK
+KYKYYYYKYK
+KYYKKKKYYK
+.KYYYYYYK.
+..KKKKKK..
+..........

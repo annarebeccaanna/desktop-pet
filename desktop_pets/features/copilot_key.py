@@ -82,7 +82,14 @@ class CopilotKey(Feature):
                 dictation.toggle()
         elif action in ("ai_chat", "dictate") or ((alt or ctrl) and app.features.is_enabled("ai_chat")):
             chat = app.features.get("ai_chat")
-            if chat is not None:
+            if chat is None:
+                return
+            tools = app.features.get("text_tools")
+            if (not alt and not ctrl and tools is not None and tools.active
+                    and self.ctx.settings.get("ai.copilot_selection", True)):
+                # Text markiert? → Text-Werkzeuge, sonst wie gewohnt der Chat
+                tools.start(fallback=lambda: chat.open_input(voice=False, serious=False))
+            else:
                 chat.open_input(voice=alt, serious=ctrl)
         elif action == "call":
             app.call_pet()

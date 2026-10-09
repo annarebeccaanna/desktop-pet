@@ -189,3 +189,64 @@ def paste() -> bool:
     user32.keybd_event(VK_V, 0, KEYUP, 0)
     user32.keybd_event(VK_CONTROL, 0, KEYUP, 0)
     return True
+
+
+# --------------------------------------------------------------------------- #
+# Markierten Text holen
+# --------------------------------------------------------------------------- #
+# In Konsolen bedeutet Strg + C „Programm abbrechen“ – dort nie automatisch kopieren.
+TERMINALS = {"windowsterminal.exe", "cmd.exe", "powershell.exe", "pwsh.exe", "conhost.exe", "openconsole.exe",
+             "wsl.exe", "bash.exe", "putty.exe", "mintty.exe", "alacritty.exe", "wezterm-gui.exe",
+             "kitty.exe", "mobaxterm.exe"}
+
+
+def foreground_window() -> int:
+    if not IS_WINDOWS:
+        return 0
+    user32 = ctypes.WinDLL("user32")
+    user32.GetForegroundWindow.restype = ctypes.c_void_p
+    return int(user32.GetForegroundWindow() or 0)
+
+
+def foreground_process() -> str:
+    """Programmdatei des Vordergrund-Fensters, z. B. ``outlook.exe`` (klein geschrieben)."""
+    if not IS_WINDOWS:
+        return ""
+    from ctypes import wintypes
+
+    user32 = ctypes.WinDLL("user32")
+    kernel32 = ctypes.WinDLL("kernel32")
+    user32.GetForegroundWindow.restype = wintypes.HWND
+    pid = wintypes.DWORD()
+    user32.GetWindowThreadProcessId(user32.GetForegroundWindow(), ctypes.byref(pid))
+    handle = kernel32.OpenProcess(0x1000, False, pid.value)       # PROCESS_QUERY_LIMITED_INFORMATION
+    if not handle:
+        return ""
+    try:
+        buf = ctypes.create_unicode_buffer(520)
+        size = wintypes.DWORD(520)
+        if kernel32.QueryFullProcessImageNameW(handle, 0, buf, ctypes.byref(size)):
+            return buf.value.replace("/", "\\").rsplit("\\", 1)[-1].lower()
+        return ""
+    finally:
+        kernel32.CloseHandle(handle)
+
+
+def clipboard_sequence() -> int:
+    """Ändert sich bei jedem neuen Inhalt der Zwischenablage."""
+    if not IS_WINDOWS:
+        return 0
+    return int(ctypes.WinDLL("user32").GetClipboardSequenceNumber())
+
+
+def send_copy() -> bool:
+    """Strg + C an das Fenster mit dem Fokus schicken."""
+    if not IS_WINDOWS:
+        return False
+    user32 = ctypes.WinDLL("user32")
+    VK_CONTROL, VK_C, KEYUP = 0x11, 0x43, 0x0002
+    user32.keybd_event(VK_CONTROL, 0, 0, 0)
+    user32.keybd_event(VK_C, 0, 0, 0)
+    user32.keybd_event(VK_C, 0, KEYUP, 0)
+    user32.keybd_event(VK_CONTROL, 0, KEYUP, 0)
+    return True

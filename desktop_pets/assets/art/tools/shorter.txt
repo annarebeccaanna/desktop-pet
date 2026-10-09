@@ -1,0 +1,15 @@
+# Kürzer – Schere
+@color K #000000
+@color S #9AA8B8
+@color R #E2563A
+
+.K......K.
+.KS....SK.
+..KS..SK..
+...KSSK...
+....KK....
+...RKKR...
+..R....R..
+.R.R..R.R.
+.R.R..R.R.
+..R....R..

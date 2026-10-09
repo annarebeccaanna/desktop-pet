@@ -51,7 +51,8 @@ class AIProvider:
         self.base_url = (base_url or info.base_url).rstrip("/")
         self.transport = transport        # in Tests ersetzbar
 
-    def chat(self, system: str, messages: list[Message]) -> str:  # pragma: no cover – abstrakt
+    def chat(self, system: str, messages: list[Message], one_shot: bool = False) -> str:  # pragma: no cover
+        """``one_shot``: Einzelauftrag ohne Gesprächsverlauf (z. B. Text-Werkzeuge)."""
         raise NotImplementedError
 
     def test_connection(self) -> str:  # pragma: no cover – abstrakt

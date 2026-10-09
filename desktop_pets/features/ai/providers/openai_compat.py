@@ -87,7 +87,7 @@ class OpenAICompatProvider(AIProvider):
         data = payload.get("data", []) if isinstance(payload, dict) else payload
         return [m.get("id", "") for m in data if isinstance(m, dict) and m.get("id")]
 
-    def chat(self, system: str, messages: list[Message]) -> str:
+    def chat(self, system: str, messages: list[Message], one_shot: bool = False) -> str:  # noqa: ARG002
         if not self.model:
             found = self.list_models()
             if not found:

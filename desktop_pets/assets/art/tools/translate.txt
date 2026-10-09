@@ -1,0 +1,15 @@
+# Übersetzen – Weltkugel
+@color K #000000
+@color B #3C8CE0
+@color G #3C9A2E
+
+..KKKKKK..
+.KBBGGBBK.
+KBGGGGBBBK
+KBBGGBBGGK
+KBBBGBBGGK
+KBBBBBGGBK
+KBBGGBBBBK
+.KBGGGBBK.
+..KKKKKK..
+..........

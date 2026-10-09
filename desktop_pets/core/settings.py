@@ -43,6 +43,7 @@ DEFAULTS: dict[str, Any] = {
         "toggle_visible": "Ctrl+Alt+H",
         "pomodoro": "Ctrl+Alt+T",
         "dictate": "Ctrl+Alt+D",          # Diktieren starten/beenden
+        "text_tools": "Ctrl+Alt+M",       # Text-Werkzeuge für markierten Text
         "ai_chat": "Ctrl+Alt+K",          # KI-Chat öffnen (Alternative zur Copilot-Taste)
         "ai_voice": "Ctrl+Alt+Shift+K",   # KI-Chat mit Spracheingabe (wie Alt + Copilot)
         "ai_serious": "Ctrl+Alt+E",       # sachliche Anfrage ohne Tier-Rolle (wie Strg + Copilot)
@@ -64,6 +65,7 @@ DEFAULTS: dict[str, Any] = {
         "personality": {},    # pet_id -> eigener Persönlichkeits-Text
         "voice_engine": "silent",  # Spracheingabe: "silent" (ohne Fenster) oder "winh" (Win + H)
         "serious_prompt": "",      # eigene Zusatzanweisungen für sachliche Anfragen
+        "copilot_selection": True, # Copilot-Taste auf markiertem Text → Text-Werkzeuge
     },
     "theme": "retro_xp",
     "bed": {

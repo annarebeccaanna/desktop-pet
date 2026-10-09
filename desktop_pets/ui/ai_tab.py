@@ -132,7 +132,8 @@ class AITab(QWidget):
         self.hotkey_edits: dict[str, HotkeyEdit] = {}
         for i, (name, label) in enumerate((("ai_chat", "Chat öffnen:"), ("ai_voice", "Mit Spracheingabe:"),
                                            ("ai_serious", "Sachliche Frage:"),
-                                           ("ai_serious_voice", "Sachlich + Sprache:"))):
+                                           ("ai_serious_voice", "Sachlich + Sprache:"),
+                                           ("text_tools", "Text-Werkzeuge:"))):
             cg.addWidget(QLabel(label, chat), 2 + i, 0)
             edit = HotkeyEdit(chat)
             edit.setFixedWidth(190)
@@ -142,7 +143,13 @@ class AITab(QWidget):
             change = QPushButton("Ändern …", chat)
             change.clicked.connect(edit.start)
             cg.addWidget(change, 2 + i, 2)
-        cg.addWidget(QLabel("Spracheingabe:", chat), 6, 0)
+        self.cb_selection = QCheckBox("Copilot-Taste auf markiertem Text öffnet die Text-Werkzeuge", chat)
+        self.cb_selection.setToolTip("Text markieren → Copilot: Verbessern, Kürzer, Übersetzen …\n"
+                                     "Ist nichts markiert, öffnet sich wie gewohnt der Chat.")
+        self.cb_selection.toggled.connect(
+            lambda v: None if self._building else self.settings.set("ai.copilot_selection", bool(v)))
+        cg.addWidget(self.cb_selection, 7, 0, 1, 4)
+        cg.addWidget(QLabel("Spracheingabe:", chat), 8, 0)
         self.combo_voice = QComboBox(chat)
         self.combo_voice.addItem("Ohne Fenster (Windows-Spracherkennung)", "silent")
         self.combo_voice.addItem("Mit Windows-Fenster (Win + H)", "winh")
@@ -150,14 +157,14 @@ class AITab(QWidget):
                                     "(Einstellungen → Datenschutz → Spracherkennung). Klappt das nicht,\n"
                                     "nimmt Desktop Pets automatisch Win + H.")
         self.combo_voice.currentIndexChanged.connect(self._on_voice_engine)
-        cg.addWidget(self.combo_voice, 6, 1, 1, 2)
+        cg.addWidget(self.combo_voice, 8, 1, 1, 2)
         cg.setColumnStretch(3, 1)
         note = QLabel("Gesendet wird nur, was du eintippst oder sagst – nie Fenstertitel oder Screenshots. "
                       "Der Chat wird nicht gespeichert und ist im Pause-Modus aus. Gesprochenes wandelt "
                       "Windows selbst in Text um.", chat)
         note.setObjectName("muted")
         note.setWordWrap(True)
-        cg.addWidget(note, 7, 0, 1, 4)
+        cg.addWidget(note, 9, 0, 1, 4)
         lay.addWidget(chat)
 
         # ---------- Persönlichkeit ----------
@@ -210,6 +217,7 @@ class AITab(QWidget):
             self.combo_voice.setCurrentIndex(max(0, self.combo_voice.findData(
                 self.settings.get("ai.voice_engine", "silent"))))
             self.serious_extra.setText(self.settings.get("ai.serious_prompt") or "")
+            self.cb_selection.setChecked(bool(self.settings.get("ai.copilot_selection", True)))
             self.pers_box.setTitle(f"Persönlichkeit von {self.app.pet_name}")
             self.personality.setPlainText(self.feature.personality() if self.feature else "")
         finally:

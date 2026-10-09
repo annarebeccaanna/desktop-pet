@@ -52,7 +52,7 @@ class AnthropicProvider(AIProvider):
             return AIError("Keine Verbindung zu Anthropic. Internet prüfen.")
         return AIError(self.scrub(str(exc)))
 
-    def chat(self, system: str, messages: list[Message]) -> str:
+    def chat(self, system: str, messages: list[Message], one_shot: bool = False) -> str:  # noqa: ARG002
         client = self._client()
         params = {
             "model": self.model,

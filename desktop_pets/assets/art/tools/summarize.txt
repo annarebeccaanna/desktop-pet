@@ -1,0 +1,16 @@
+# Zusammenfassen – Notizblatt
+@color K #000000
+@color W #FFFFFF
+@color L #8A9AAA
+@color R #E2563A
+
+.KKKKKKK..
+.KWWWWWWK.
+.KWRRRRWK.
+.KWWWWWWK.
+.KWLLLLWK.
+.KWWWWWWK.
+.KWLLLWWK.
+.KWWWWWWK.
+.KWLLWWWK.
+.KKKKKKKK.
