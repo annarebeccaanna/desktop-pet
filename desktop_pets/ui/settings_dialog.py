@@ -427,7 +427,6 @@ class SettingsDialog(RetroWindow):
             size_menu.addAction(act)
         m.addAction("Spiegeln", self._on_flip)
         reset = m.addAction("Originalfarben", self._on_reset_colors)
-        reset.setEnabled(app.features.is_enabled("recolor"))
         m.addSeparator()
         m.addAction("Tier umbenennen …", self._rename_pet)
 
@@ -637,10 +636,6 @@ class SettingsDialog(RetroWindow):
         if btn:
             btn.setChecked(True)
         self.name_edit.setText(app.pet_name)
-        recolor = app.features.is_enabled("recolor")
-        for sw in self.swatches:
-            sw.setEnabled(recolor)
-        self.btn_reset_colors.setEnabled(recolor)
         self._refresh_preview()
 
     def _refresh_preview(self) -> None:
@@ -674,8 +669,6 @@ class SettingsDialog(RetroWindow):
             self._update_status()
 
     def _on_color(self, color: str, secondary: bool) -> None:
-        if not self.app.features.is_enabled("recolor"):
-            return
         key = "secondary" if secondary else "primary"
         current = self.settings.get(f"pet.colors.{self.app.pack.id}") or {}
         current[key] = color
@@ -718,6 +711,7 @@ class SettingsDialog(RetroWindow):
         il.setContentsMargins(4, 0, 8, 4)
         il.setSpacing(6)
         for _cat, label, features in self.app.features.by_category():
+            features = self._with_dependents_below(features)
             box = QGroupBox(label.replace("&", "&&"), inner)
             grid = QGridLayout(box)
             grid.setContentsMargins(10, 10, 8, 6)
@@ -729,6 +723,12 @@ class SettingsDialog(RetroWindow):
                 cb = QCheckBox(f.name.replace("&", "&&"), box)
                 cb.setObjectName("featureName")
                 cb.setEnabled(f.available)
+                if f.requires:
+                    # eingerückt unter der Funktion, von der sie abhängt
+                    cb.setStyleSheet("QCheckBox { margin-left: 18px; }")
+                    parent = self.app.features.get(f.requires)
+                    if parent is not None:
+                        cb.setToolTip(f"Nur möglich, wenn „{parent.name}“ an ist.")
                 cb.toggled.connect(lambda checked, fid=f.id: self._on_feature(fid, checked))
                 self._feature_boxes[f.id] = cb
                 grid.addWidget(cb, row, 0)
@@ -756,9 +756,18 @@ class SettingsDialog(RetroWindow):
         il.addStretch(1)
         scroll.setWidget(inner)
         outer.addWidget(scroll, 1)
-        outer.addWidget(InfoBalloon("„Chaos &amp; Spaß“ ist ab Werk aus. Das Tier legt sich nie vor Buttons "
-                                    "oder Eingabefelder.", parent=page))
         return page
+
+    @staticmethod
+    def _with_dependents_below(features: list[Feature]) -> list[Feature]:
+        """Abhängige Funktionen direkt unter ihre Eltern-Funktion sortieren."""
+        ids = {f.id for f in features}
+        top = [f for f in features if not f.requires or f.requires not in ids]
+        out: list[Feature] = []
+        for f in top:
+            out.append(f)
+            out.extend(c for c in features if c.requires == f.id)
+        return out
 
     def _refresh_features_tab(self) -> None:
         for fid, cb in self._feature_boxes.items():
@@ -766,19 +775,21 @@ class SettingsDialog(RetroWindow):
             cb.blockSignals(True)
             cb.setChecked(bool(f and f.enabled))
             cb.blockSignals(False)
+            if f is not None:
+                cb.setEnabled(f.available and (not f.requires or self.app.features.is_enabled(f.requires)))
             if f is not None and fid in self.app.features.failed:
                 cb.setToolTip(f"Abgestürzt und deaktiviert: {self.app.features.failed[fid]}")
 
     def _on_feature(self, fid: str, enabled: bool) -> None:
         if self._building:
             return
-        ok = self.app.features.set_enabled(fid, enabled)
-        if not ok:
-            # z. B. beim Einschalten abgestürzt – Kästchen zurücksetzen
+        self.app.features.set_enabled(fid, enabled)
+        # Kästchen nachziehen: abgestürzte Funktionen, abhängige Funktionen (aus/ausgegraut)
+        self._building = True
+        try:
             self._refresh_features_tab()
-        if fid == "recolor":
-            self._refresh_pets_tab()
-            self._refresh_pet_icons()
+        finally:
+            self._building = False
         self._update_status()
 
     def _on_feature_toggled(self, feature_id: str, enabled: bool) -> None:  # noqa: ARG002
@@ -870,6 +881,11 @@ class SettingsDialog(RetroWindow):
         self.cb_always = QCheckBox("Auch im Normalmodus immer unsichtbar für Aufnahmen", share)
         self.cb_always.toggled.connect(lambda v: self._set_if_live("pause.always_exclude", v))
         sl.addWidget(self.cb_always)
+        self.cb_fullscreen = QCheckBox("Bei Vollbild verstecken (Spiele, Präsentationen, Videos)", share)
+        self.cb_fullscreen.setToolTip("Läuft im Vordergrund eine Vollbild-Anwendung, verschwindet das Tier\n"
+                                      "und kommt danach von selbst wieder.")
+        self.cb_fullscreen.toggled.connect(lambda v: self._set_if_live("pause.fullscreen_hide", v))
+        sl.addWidget(self.cb_fullscreen)
         auto_row = QHBoxLayout()
         self.cb_auto = QCheckBox("Pause automatisch starten, wenn eine Freigabe erkannt wird", share)
         self.cb_auto.setToolTip("Erkennt die Freigabe-Leisten von Teams, Zoom, Webex und Browsern.\n"
@@ -911,6 +927,7 @@ class SettingsDialog(RetroWindow):
         self.cb_exclude.setChecked(bool(self.settings.get("pause.exclude_from_capture")))
         self.cb_always.setChecked(bool(self.settings.get("pause.always_exclude")))
         self.cb_auto.setChecked(bool(self.settings.get("pause.auto_detect")))
+        self.cb_fullscreen.setChecked(bool(self.settings.get("pause.fullscreen_hide")))
         feature = self.app.features.get("share_autopause")
         if feature is not None and feature.enabled:
             app_name = feature.sharing_app

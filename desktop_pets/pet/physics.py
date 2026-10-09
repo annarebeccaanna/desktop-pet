@@ -161,6 +161,17 @@ class World:
         return event
 
     # ---------- Hilfen ----------
+    def catch_on_drop(self, body: Body, tolerance: float) -> Platform | None:
+        """Beim Loslassen nach dem Ziehen: Liegen die Füße knapp *unter* einer Fensterkante
+        (man lässt das Tier ja meist auf der Titelleiste los), wird es auf die Kante gesetzt."""
+        cands = [p for p in self.platforms.values()
+                 if not p.solid and p.spans(body.x) and p.y <= body.y <= p.y + tolerance]
+        if not cands:
+            return None
+        plat = min(cands, key=lambda p: body.y - p.y)
+        body.place_on(plat)
+        return plat
+
     def _block_walls(self, body: Body, new_x: float) -> float:
         """Böden, die höher liegen als die Füße, wirken seitlich wie eine Wand."""
         half = body.width / 2

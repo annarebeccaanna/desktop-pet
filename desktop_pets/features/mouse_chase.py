@@ -81,6 +81,7 @@ class MouseChase(Feature):
     allowed_in_pause = False
     pause_label = "aus"
     order = 20
+    requires = "wander"          # ohne Herumstreunen keine Jagd
     options = [
         Option("eagerness", "Jagdlust", 100, kind="int", minimum=0, maximum=200, suffix=" %"),
     ]

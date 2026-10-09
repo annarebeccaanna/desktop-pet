@@ -67,6 +67,8 @@ class FeatureManager:
         f = self.features.get(fid)
         if f is None or not f.available:
             return False
+        if enabled and f.requires and not self.is_enabled(f.requires):
+            return False                       # z. B. Mausjagd ohne Herumstreunen
         if persist:
             if f.settings_key:
                 self.ctx.settings.set(f.settings_key, bool(enabled))
@@ -76,7 +78,16 @@ class FeatureManager:
             self._enable(f)
         elif not enabled and f.enabled:
             self._disable(f)
+        if not enabled:
+            # Abhängige Funktionen mit ausschalten (und so speichern) – beim Wiedereinschalten
+            # bleiben sie aus, bis man sie selbst wieder anhakt.
+            for child in self.dependents(fid):
+                if child.enabled or (persist and self._wanted(child, ignore_parent=True)):
+                    self.set_enabled(child.id, False, persist=persist)
         return f.enabled == enabled
+
+    def dependents(self, fid: str) -> list[Feature]:
+        return [f for f in self.features.values() if f.requires == fid]
 
     def sync_from_settings(self) -> None:
         """Nach „Abbrechen“/„Zurücksetzen“: Zustand aus den Einstellungen übernehmen."""
@@ -152,7 +163,11 @@ class FeatureManager:
             self._disable(f)
             return False
 
-    def _wanted(self, f: Feature) -> bool:
+    def _wanted(self, f: Feature, ignore_parent: bool = False) -> bool:
+        if f.requires and not ignore_parent:
+            parent = self.features.get(f.requires)
+            if parent is not None and not self._wanted(parent):
+                return False
         if f.settings_key:
             return bool(self.ctx.settings.get(f.settings_key, f.default_enabled))
         return self.ctx.settings.feature_enabled(f.id, f.default_enabled)

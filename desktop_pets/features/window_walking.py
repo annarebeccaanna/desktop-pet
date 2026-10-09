@@ -8,7 +8,8 @@ from ..pet.brain import Behaviour, Brain, Intent, Perception, State
 from .base import Feature, register
 
 REFRESH_EVERY = 0.25    # max. alle 250 ms (Spezifikation Abschnitt 9)
-WALK_OFF_CHANCE = 0.2   # bei jeder neuen Entscheidung auf einem Fenster
+WALK_OFF_CHANCE = 0.1   # bei jeder neuen Entscheidung auf einem Fenster …
+MIN_STAY = 60.0         # … aber erst, wenn es schon so lange (s) oben ist – sonst wäre es gleich wieder weg
 
 
 class WalkOffEdge(Behaviour):
@@ -17,8 +18,12 @@ class WalkOffEdge(Behaviour):
     phase = "post"
     CALM = (State.IDLE, State.SIT, State.GROOM, State.SULK)
 
+    def __init__(self) -> None:
+        self.on_window_for = 0.0
+
     def step(self, brain: Brain, dt: float, p: Perception) -> Intent | None:
-        if not p.on_window or brain.state not in self.CALM or brain.timer > 0:
+        self.on_window_for = self.on_window_for + dt if p.on_window else 0.0
+        if self.on_window_for < MIN_STAY or brain.state not in self.CALM or brain.timer > 0:
             return None
         if brain.rng.random() >= WALK_OFF_CHANCE:
             return None

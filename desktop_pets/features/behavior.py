@@ -1,5 +1,5 @@
 """Verhalten & Persönlichkeit: Herumstreunen, Streicheln, Tagesrhythmus,
-Gedächtnis, Umfärben. (Bedürfnisse: needs.py, Körbchen: bed.py, …)"""
+Gedächtnis. (Umfärben: Tiere-Tab; Bedürfnisse: needs.py, Körbchen: bed.py, …)"""
 
 from __future__ import annotations
 
@@ -79,6 +79,7 @@ class DayRhythm(Feature):
     pause_label = "ja"
 
     EVENING_FROM = 21     # Uhr
+    AFTER_DROP = 120.0    # s: so lange nach dem Absetzen kein Umzug ins Körbchen
     MORNING_UNTIL = 6
 
     def __init__(self, ctx) -> None:
@@ -95,6 +96,8 @@ class DayRhythm(Feature):
         app = self.ctx.app
         if event != "nap" or app is None or not self.active or self.ctx.modes.paused or not self.is_night():
             return
+        if app.seconds_since_drop() < self.AFTER_DROP:
+            return                      # gerade erst irgendwo hingesetzt – dort darf es dösen
         bed = app.features.get("bed")
         if bed is not None and bed.enabled and not bed.is_near(app.body.x, app.body.y):
             bed.send_pet()
@@ -121,22 +124,3 @@ class Memory(Feature):
             self._since = 0.0
             if self.ctx.app is not None:
                 self.ctx.app.save_memory()
-
-
-@register
-class Recolor(Feature):
-    order = 95
-    id = "recolor"
-    name = "Umfärben"
-    description = "Fellfarbe über die Paint-Palette"
-    default_enabled = True
-    allowed_in_pause = True
-    pause_label = "ja"
-
-    def enable(self) -> None:
-        if self.ctx.app is not None:
-            self.ctx.app.refresh_sprites()
-
-    def disable(self) -> None:
-        if self.ctx.app is not None:
-            self.ctx.app.refresh_sprites(force_original=True)

@@ -91,6 +91,7 @@ def list_windows(min_w: int = 120, min_h: int = 60) -> list[WinRect]:
     GWL_EXSTYLE = -20
     WS_EX_TOOLWINDOW = 0x00000080
     WS_EX_NOACTIVATE = 0x08000000
+    WS_EX_TRANSPARENT = 0x00000020      # klick-durchlässige Overlays (Spiele-/Aufnahme-Overlays …)
     DWMWA_EXTENDED_FRAME_BOUNDS = 9
     DWMWA_CLOAKED = 14
 
@@ -107,7 +108,7 @@ def list_windows(min_w: int = 120, min_h: int = 60) -> list[WinRect]:
         if pid.value == own_pid:
             return True
         ex = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-        if ex & (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE):
+        if ex & (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT):
             return True
         cloaked = ctypes.c_int(0)
         dwm.DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, ctypes.byref(cloaked), ctypes.sizeof(cloaked))

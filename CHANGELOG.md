@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.8.1 – Einstellungen aufgeräumt, Körbchen und Fenster zuverlässiger
+
+- **Rücksicht bei Vollbild** gibt es nur noch einmal: als Häkchen „Bei Vollbild verstecken“ unter **Pause & Freigabe → Bildschirmfreigabe** (ab Werk an). Der Eintrag in der Funktionsliste ist weg; die bisherige Einstellung wird übernommen.
+- **Mausjagd hängt an Herumstreunen:** Mausjagd steht eingerückt darunter. Herumstreunen aus → Mausjagd geht mit aus und ist ausgegraut. Herumstreunen wieder an → Mausjagd ist wieder anklickbar, wird aber nicht von selbst angehakt.
+- Infoleiste zu „Chaos & Spaß“ entfernt.
+- Häkchen **Umfärben** entfernt: Farben aus dem Tab „Tiere“ gelten immer („Originalfarben“ setzt zurück).
+- **Körbchen:**
+  - Schläft das Tier am Körbchen (Nickerchen, Inaktivität, „Schlafen schicken“), kuschelt es sich jetzt auch im Normalmodus hinein. Es liegt dann mit dem Körbchen hinter den Fenstern, statt darüber zu schweben.
+  - Wacht es auf (Tippen, Doppelklick aufs Körbchen, Rechtsklick → „Tier wecken“, Füttern, Rufen, eine Nachricht), steigt es wieder heraus.
+  - **Behoben:** War der Weg zum Körbchen länger als 30 Sekunden oder wurde er unterbrochen, schlief das Tier unterwegs ein. Jetzt hüpft es am Ende direkt hinein.
+  - Nach dem Pause-Modus döst das Tier noch kurz im Körbchen und steigt dann heraus.
+- **Auf Fenster ziehen:**
+  - Lässt man das Tier auf der Titelleiste los (Füße knapp unter der Oberkante), landet es jetzt auf der Fensterkante, statt hindurch zum Boden zu fallen.
+  - **Behoben:** Das Tier lief bisher bei jeder fünften Entscheidung gleich wieder über die Kante. Jetzt bleibt es mindestens eine Minute oben, danach geht es nur gelegentlich hinunter.
+  - Abends zieht es in den ersten 2 Minuten nach dem Absetzen nicht ins Körbchen um.
+  - Klick-durchlässige Overlay-Fenster (z. B. Spiele- oder Aufnahme-Overlays) zählen nicht mehr als Fenster. Sie konnten alle Kanten „verdecken“.
+- Einstellungen: Schema v4.
+
+Tests: 152 (neu: Abhängigkeit Mausjagd/Herumstreunen samt Dialog, Vollbild-Schalter und Migration, Farben ohne Schalter, Körbchen rein/raus/hineinhüpfen, Nachricht weckt, Absetzen auf der Titelleiste, Verweildauer auf Fenstern).
+
+- [ ] **Auf Windows prüfen:** Tier auf die Titelleiste eines (nicht maximierten) Fensters ziehen → bleibt oben.
+- [ ] **Auf Windows prüfen:** „Ins Körbchen schicken“ von weit weg und von einem Fenster aus → liegt im Körbchen, Doppelklick weckt.
+
 ## 0.8.0 – Copilot-Taste
 
 - Einstellungen → **Allgemein → Copilot-Taste**: Häkchen „Copilot-Taste für Desktop Pets verwenden“ (ab Werk aus) plus Aktion: **Einstellungen öffnen** (Standard), Tier zu mir rufen, Pause-Modus umschalten. Später kommt „KI-Chat öffnen“ dazu.
@@ -8,7 +31,7 @@
 
 Tests: 139 (neu: Tastenerkennung inkl. Wiederholung/fremder Tasten/künstlicher Tasten, Häkchen, Aktionen).
 
-- [ ] **Auf Windows prüfen:** Häkchen setzen → Copilot-Taste öffnet die Einstellungen, kein Copilot, kein Startmenü. Häkchen raus → Copilot öffnet wieder.
+- [x] **Auf Windows geprüft:** Häkchen setzen → Copilot-Taste öffnet die Einstellungen, kein Copilot, kein Startmenü. Häkchen raus → Copilot öffnet wieder.
 
 ## 0.7.1 – Tiergeräusche einzeln abschaltbar
 

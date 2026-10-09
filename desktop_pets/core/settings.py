@@ -19,7 +19,7 @@ from .log import get_logger
 
 log = get_logger("settings")
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 DEFAULTS: dict[str, Any] = {
     "version": SCHEMA_VERSION,
@@ -36,6 +36,7 @@ DEFAULTS: dict[str, Any] = {
         "exclude_from_capture": True,   # im Pause-Modus unsichtbar für Aufnahmen
         "always_exclude": False,        # auch im Normalmodus
         "auto_detect": False,           # experimentell (Phase 4)
+        "fullscreen_hide": True,        # bei Vollbild-Anwendungen verstecken
     },
     "hotkeys": {
         "toggle_pause": "Ctrl+Alt+P",
@@ -93,7 +94,17 @@ def _migrate_2_to_3(data: dict) -> dict:
     return data
 
 
-MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _migrate_1_to_2, 2: _migrate_2_to_3}
+def _migrate_3_to_4(data: dict) -> dict:
+    # „Rücksicht bei Vollbild“ war ein Schalter unter Funktionen – jetzt im Tab „Pause & Freigabe“.
+    features = data.get("features", {})
+    if "fullscreen_hide" in features:
+        data.setdefault("pause", {})["fullscreen_hide"] = bool(features.pop("fullscreen_hide"))
+    # „Umfärben“ gibt es nicht mehr als Schalter – Farben gelten immer.
+    features.pop("recolor", None)
+    return data
+
+
+MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _migrate_1_to_2, 2: _migrate_2_to_3, 3: _migrate_3_to_4}
 
 
 def migrate(data: dict) -> dict:

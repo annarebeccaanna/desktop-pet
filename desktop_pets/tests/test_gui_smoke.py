@@ -37,7 +37,9 @@ def test_app_starts_pauses_and_switches_pets(qapp, tmp_path):
     pa.say("Test", "darf nicht erscheinen")
     assert not pa.bubble.isVisible()
     pa.toggle_pause()
-    assert not pa.in_bed and pa.pet_window.isVisible()
+    assert pa.in_bed                       # döst nach der Pause noch kurz im Körbchen …
+    pa.features.get("bed").wake_pet()
+    assert not pa.in_bed and pa.pet_window.isVisible()   # … und steigt dann heraus
 
     # Tierwechsel ohne Neustart
     for pid in ("dog", "dragon", "axolotl", "cat"):

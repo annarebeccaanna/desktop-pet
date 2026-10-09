@@ -4,8 +4,11 @@
 * Standard: unten links über der Taskleiste; ziehbar, Position pro Bildschirm gespeichert.
 * Doppelklick weckt das Tier oder schickt es schlafen; Rechtsklick: verschieben,
   ausblenden, Tier hineinschicken. Ausgeblendet → „Körbchen einblenden“ im Tray-Menü.
-* Pause-Modus: Das Tier schläft im Körbchen. Es wird dann im Körbchen-Fenster
-  gezeichnet – so bleibt im Pause-Modus genau ein Fenster auf dem Desktop.
+* Schläft das Tier am Körbchen (Nickerchen, Inaktivität, „Schlafen schicken“,
+  Pause-Modus), kuschelt es sich hinein: Es wird dann im Körbchen-Fenster gezeichnet
+  und liegt mit ihm hinter den Fenstern. Wacht es auf, steigt es wieder heraus.
+* Dauert der Weg zu lange (oder wird er unterbrochen), hüpft das Tier am Ende direkt
+  hinein, statt unterwegs einzuschlafen.
 """
 
 from __future__ import annotations
@@ -147,6 +150,9 @@ class Bed(Feature):
         app = self.ctx.app
         if app is not None and app.in_bed:
             return True
+        return self._at_bed(x, y)
+
+    def _at_bed(self, x: float, y: float) -> bool:
         if not self.visible:
             return False
         b = self.window.bottom_center()
@@ -179,9 +185,17 @@ class Bed(Feature):
         if app is None or self.ctx.modes.paused:
             return
         if app.brain.state == State.SLEEP and self.is_near(app.body.x, app.body.y):
-            app.brain.wake()
+            self.wake_pet()
         else:
             self.send_pet()
+
+    def wake_pet(self) -> None:
+        app = self.ctx.app
+        if app is None or self.ctx.modes.paused:
+            return
+        app.brain.wake()
+        if app.in_bed:
+            self._leave()
 
     def _on_right_click(self, pos: "QPoint") -> None:
         from PySide6.QtWidgets import QMenu
@@ -191,7 +205,10 @@ class Bed(Feature):
         m = QMenu()
         m.addAction(f"{name} verschieben", self.window.start_move_mode)
         m.addAction(f"{name} ausblenden", self.hide_by_user)
-        m.addAction("Tier hineinschicken", self.send_pet).setEnabled(not self.ctx.modes.paused)
+        if app is not None and app.in_bed and not self.ctx.modes.paused:
+            m.addAction("Tier wecken", self.wake_pet)
+        else:
+            m.addAction("Tier hineinschicken", self.send_pet).setEnabled(not self.ctx.modes.paused)
         m.exec(pos)
 
     def hide_by_user(self) -> None:
@@ -201,17 +218,41 @@ class Bed(Feature):
         self.ctx.settings.set("bed.hidden", False)
 
     # ------------------------------------------------------------------ #
-    # Pause-Modus: im Körbchen schlafen
+    # Im Körbchen schlafen
     # ------------------------------------------------------------------ #
     def on_mode_changed(self, mode: Mode) -> None:
         app = self.ctx.app
         if app is None:
             return
-        if mode == Mode.PAUSE and self.visible and not app.in_bed:
-            self._enter()
+        if mode == Mode.PAUSE and self.visible:
+            if not app.in_bed:
+                self._enter()
+            app.brain.send_to_sleep(1e9)
+            app.animator.play("sleep", restart=True)
         elif mode != Mode.PAUSE and app.in_bed:
-            self._leave()
-            app.brain.send_to_sleep(12)
+            app.brain.send_to_sleep(12)     # nach der Pause noch kurz weiterdösen, dann heraus
+
+    def tick(self, dt: float) -> None:  # noqa: ARG002
+        app = self.ctx.app
+        if app is None or self.ctx.modes.paused:
+            return
+        sleeping = app.brain.state == State.SLEEP
+        if app.in_bed:
+            if not sleeping or not self.visible:
+                self._leave()
+        elif (sleeping and not app.dragging and not app.pet_hidden and app.body.on_ground
+              and self._at_bed(app.body.x, app.body.y)):
+            self._enter()
+
+    def on_brain_event(self, event: str) -> None:
+        app = self.ctx.app
+        if event != "arrived:bed" or app is None or self.ctx.modes.paused or not self.visible:
+            return
+        if not self._at_bed(app.body.x, app.body.y):
+            # Weg zu lang oder unterbrochen: lieber direkt hineinhüpfen als unterwegs einschlafen
+            b = self.window.bottom_center()
+            app.teleport(b.x(), b.y())
+            app.brain.send_to_sleep(600)
 
     def _enter(self) -> None:
         app = self.ctx.app
@@ -220,9 +261,8 @@ class Bed(Feature):
         ground = app.world.ground_at(app.body.x)
         if ground is not None and abs(ground.y - app.body.y) < 8:
             app.body.place_on(ground)
-        app.brain.send_to_sleep(1e9)
-        app.animator.play("sleep", restart=True)
         app.in_bed = True
+        app.bubble.dismiss()
         app.pet_window.hide()
         app.render(force=True)
 

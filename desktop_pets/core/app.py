@@ -102,8 +102,9 @@ class PetApp(QObject):
         self._zzz_scaled = self._zzz
 
         self._hidden: set[str] = set()   # Gründe fürs Ausblenden: "user", "fullscreen"
-        self.in_bed = False           # Tier liegt (im Pause-Modus) im Körbchen-Fenster
+        self.in_bed = False           # Tier schläft im Körbchen (wird im Körbchen-Fenster gezeichnet)
         self.dragging = False
+        self.dropped_at = -1e9            # wann das Tier zuletzt abgesetzt wurde (monotonic)
         self.user_idle = 0.0
         self._last_tick = time.monotonic()
         self._cursor_prev = QCursor.pos()
@@ -191,8 +192,6 @@ class PetApp(QObject):
         return max(1, self.pack.scale * max(1, min(3, size)))
 
     def pet_colors(self, pet_id: str | None = None) -> dict[str, str] | None:
-        if not self.settings.feature_enabled("recolor", True):
-            return None
         return self.settings.get(f"pet.colors.{pet_id or self.pack.id}") or None
 
     def icon_pixmap(self, size: int = 16, pet_id: str | None = None, zzz: bool = False) -> QPixmap:
@@ -297,6 +296,10 @@ class PetApp(QObject):
         """Sprechblase über dem Tier (im Pause-Modus nie)."""
         if self.modes.paused:
             return
+        if self.in_bed and not self.pet_hidden:
+            bed = self.features.get("bed")
+            if bed is not None:
+                bed.wake_pet()          # eine Nachricht weckt das Tier – es steigt aus dem Körbchen
         if self.pet_hidden or self.in_bed:
             self.tray.tray.showMessage(title or APP_NAME, text)
             return
@@ -490,10 +493,18 @@ class PetApp(QObject):
 
     def _on_drag_end(self) -> None:
         self.dragging = False
+        self.dropped_at = time.monotonic()
         self.brain.end_drag()
         ground = self.world.ground_at(self.body.x)
         if ground is not None and self.body.y >= ground.y:
             self.body.place_on(ground)
+        else:
+            # Auf der Titelleiste losgelassen: auf der Fensterkante absetzen statt durchzufallen
+            height = self.sprites.frame_h if self.sprites else 64
+            self.world.catch_on_drop(self.body, tolerance=height * 0.6)
+
+    def seconds_since_drop(self) -> float:
+        return time.monotonic() - self.dropped_at
 
     # ------------------------------------------------------------------ #
     # Modus, Einstellungen, Hotkeys

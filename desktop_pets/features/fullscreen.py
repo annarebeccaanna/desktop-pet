@@ -29,6 +29,8 @@ class FullscreenHide(Feature):
     allowed_in_pause = True
     pause_label = "ja"
     order = 85
+    listed = False                      # Schalter im Tab „Pause & Freigabe“
+    settings_key = "pause.fullscreen_hide"
 
     def __init__(self, ctx) -> None:
         super().__init__(ctx)
