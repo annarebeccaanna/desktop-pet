@@ -9,7 +9,6 @@ from .base import planned
 planned("reminders", "Erinnerungen", "Trinken, Aufstehen, Lüften", "work", "später", "Phase 3", 20)
 planned("calendar_alerts", "Kalender", "Miaut vor Terminen (Outlook oder ICS)", "work", "später", "Phase 3", 30)
 planned("event_webhook", "Build & Tests", "Lokaler Webhook: Freudensprung oder Fauchen", "work", "stumm", "Phase 3", 40)
-planned("system_monitor", "Systemlast", "Hohe CPU: hechelt · wenig Akku: müde", "work", "ja", "Phase 3", 50)
 
 # Chaos & Spaß – Phase 4 (ab Werk aus)
 planned("gifts", "Geschenke", "Bringt Pixelmäuse und Wollknäuel", "chaos", "aus", "Phase 4", 10)

@@ -1,0 +1,11 @@
+# Schweißtropfen (Systemlast)
+@color K #1C4E8A
+@color B #6CB4F0
+@color W #FFFFFF
+
+..K..
+.KBK.
+.KBK.
+KBWBK
+KBBBK
+.KKK.

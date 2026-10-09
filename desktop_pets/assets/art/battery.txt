@@ -1,0 +1,11 @@
+# Leerer Akku (Systemlast)
+@color K #000000
+@color R #E2563A
+@color W #FFFFFF
+
+.KKKKKKKK.
+KWWWWWWWKK
+KRWWWWWWKK
+KRWWWWWWKK
+KWWWWWWWKK
+.KKKKKKKK.
