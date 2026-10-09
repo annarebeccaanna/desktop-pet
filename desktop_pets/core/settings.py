@@ -42,6 +42,7 @@ DEFAULTS: dict[str, Any] = {
         "toggle_pause": "Ctrl+Alt+P",
         "toggle_visible": "Ctrl+Alt+H",
         "pomodoro": "Ctrl+Alt+T",
+        "dictate": "Ctrl+Alt+D",          # Diktieren starten/beenden
         "ai_chat": "Ctrl+Alt+K",          # KI-Chat öffnen (Alternative zur Copilot-Taste)
         "ai_voice": "Ctrl+Alt+Shift+K",   # KI-Chat mit Spracheingabe (wie Alt + Copilot)
         "ai_serious": "Ctrl+Alt+E",       # sachliche Anfrage ohne Tier-Rolle (wie Strg + Copilot)

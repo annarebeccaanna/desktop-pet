@@ -28,6 +28,7 @@ Das Tier erscheint unten rechts über der Taskleiste, das Tray-Icon zeigt seinen
 | Pause-Modus umschalten | `Strg + Alt + P` |
 | Tier ein-/ausblenden | `Strg + Alt + H` |
 | Pomodoro starten/stoppen | `Strg + Alt + T` (wenn Pomodoro eingeschaltet ist) |
+| Diktieren (einfügen, wo du schreibst) | `Strg + Alt + D` |
 | KI-Chat öffnen | `Strg + Alt + K` oder Copilot-Taste |
 | KI-Chat mit Spracheingabe | `Strg + Alt + Umschalt + K` oder Alt + Copilot-Taste |
 | Sachliche Frage (ohne Tier-Rolle) | `Strg + Alt + E` oder Strg + Copilot-Taste |

@@ -883,7 +883,8 @@ class SettingsDialog(RetroWindow):
         self.hotkey_edits: dict[str, HotkeyEdit] = {}
         for row_i, (name, label) in enumerate((("toggle_pause", "Pause-Modus umschalten:"),
                                                ("toggle_visible", "Tier ein-/ausblenden:"),
-                                               ("pomodoro", "Pomodoro starten/stoppen:"))):
+                                               ("pomodoro", "Pomodoro starten/stoppen:"),
+                                               ("dictate", "Diktieren starten/beenden:"))):
             kg.addWidget(QLabel(label, keys), row_i, 0)
             edit = HotkeyEdit(keys)
             edit.setFixedWidth(170)
@@ -899,7 +900,7 @@ class SettingsDialog(RetroWindow):
             note += " Globale Tastenkürzel gibt es nur unter Windows."
         hint = QLabel(note, keys)
         hint.setObjectName("muted")
-        kg.addWidget(hint, 3, 0, 1, 4)
+        kg.addWidget(hint, 4, 0, 1, 4)
         lay.addWidget(keys)
 
         share = QGroupBox("Bildschirmfreigabe", page)

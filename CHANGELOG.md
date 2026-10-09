@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.10.0 – Diktieren
+
+- **Diktieren** (neue Funktion, ab Werk an, unter Funktionen → Nützlich im Arbeitsalltag): sprechen statt tippen.
+  - **Start/Stopp:** `Strg + Alt + D` (änderbar unter Pause & Freigabe), Tray-Menü „Diktieren“ oder Copilot-Taste mit der Aktion „Diktieren (Text einfügen)“ (Einstellungen → Allgemein).
+  - Das Tier setzt sich und hört zu; was es versteht, steht live in seiner Sprechblase. Kurz still sein oder das Kürzel nochmal drücken beendet das Diktat.
+  - **Eingabefeld hat den Fokus** (dort, wo du hineingeklickt hast): Der Text wird eingefügt, deine bisherige Zwischenablage kommt danach zurück. Erkannt wird das Feld per Windows-Bedienungshilfe (UI Automation) und am blinkenden Cursor. Bei Dokumenten wie Word, bei denen das nicht ganz sicher ist, wird eingefügt und der Text bleibt zusätzlich in der Zwischenablage.
+  - **Kein Eingabefeld:** Der Text kommt in die Zwischenablage, und **das Tier sagt per Sprechblase Bescheid**, mit dem Text und „mit Strg + V einfügen“.
+  - Erkennung ohne Fenster (Windows-Spracherkennung). Ist sie nicht verfügbar, z. B. weil die Online-Spracherkennung aus ist, springt Win + H ein und schreibt direkt ins Feld.
+  - **Pause-Modus:** Diktieren geht, aber ohne Sprechblase. Landet der Text in der Zwischenablage, kommt eine Tray-Meldung.
+  - Kein API-Key nötig.
+
+Tests: 214.
+
+- [ ] **Auf Windows prüfen:** In Word/Outlook/Teams/Browser-Feld klicken → `Strg + Alt + D` → sprechen → Text steht im Feld, alte Zwischenablage ist noch da.
+- [ ] **Auf Windows prüfen:** Auf den Desktop klicken → diktieren → Tier sagt „in die Zwischenablage gelegt“, Strg + V fügt ein.
+
 ## 0.9.4 – Sachliche Fragen ohne Tier-Rolle
 
 - **Sachliche Anfrage:** ohne „Du bist ein Pixeltier …“. Stattdessen ein neutraler Assistent: präzise, so ausführlich wie nötig, als reiner Text ohne Markdown.

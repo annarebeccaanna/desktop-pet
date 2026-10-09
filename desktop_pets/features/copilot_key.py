@@ -15,6 +15,7 @@ from .base import Feature, register
 # Wert → Anzeige
 ACTIONS = [
     ("ai_chat", "KI-Chat öffnen"),
+    ("dictate", "Diktieren (Text einfügen)"),
     ("call", "Tier zu mir rufen"),
     ("pause", "Pause-Modus umschalten"),
 ]
@@ -75,7 +76,11 @@ class CopilotKey(Feature):
             return
         self.fired_count += 1
         action = self.action
-        if action == "ai_chat" or ((alt or ctrl) and app.features.is_enabled("ai_chat")):
+        if action == "dictate" and not (alt or ctrl):
+            dictation = app.features.get("dictation")
+            if dictation is not None and dictation.enabled:
+                dictation.toggle()
+        elif action in ("ai_chat", "dictate") or ((alt or ctrl) and app.features.is_enabled("ai_chat")):
             chat = app.features.get("ai_chat")
             if chat is not None:
                 chat.open_input(voice=alt, serious=ctrl)
